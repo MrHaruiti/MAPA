@@ -62,10 +62,6 @@ function renderizarChegadas() {
       div.querySelector("button").onclick = () => autorizarPouso(v);
       chegadasDiv.appendChild(div);
     });
-} ${v.voo}</strong><br>De: ${v.cidade}<br>A/C: ${v.aeronave}<br>Horário: ${v.horario}<br>Status: ${v.status}<br><button class='autorizar'>Autorizar Pouso</button>`;
-    div.querySelector("button").onclick = () => autorizarPouso(v);
-    chegadasDiv.appendChild(div);
-  });
 }
 
 function renderizarPartidas() {
@@ -112,23 +108,6 @@ function taxiToTerminal(el, voo) {
       el.style.background = "orange";
     }
   }, 20);
-
-  el.onclick = (evt) => {
-    evt.stopPropagation();
-    selecionarPartida(el, voo);
-  };
-}
-  }, 20);
-}
-
-function alocarEmPosicao(el, voo) {
-  const terminal = document.querySelectorAll('.terminal')[voo.tps - 1];
-  const posicaoLivre = terminal.querySelector(".posicao.livre");
-  if (posicaoLivre) {
-    el.style.top = (posicaoLivre.offsetTop + terminal.offsetTop) + "px";
-    el.style.left = (posicaoLivre.offsetLeft + terminal.offsetLeft) + "px";
-    posicaoLivre.classList.remove("livre");
-  }
 }
 
 function selecionarPartida(el, voo) {
@@ -201,7 +180,6 @@ function hideTooltip(e) {
   }
 }
 
-
 function criarTerminais() {
   const totalTerminais = 10;
   const posicoesPorTerminal = 36;
@@ -222,68 +200,31 @@ function criarTerminais() {
   }
 }
 
-  
-  }
-}
+document.addEventListener("DOMContentLoaded", () => {
+  criarTerminais();
 
-criarTerminais();
+  fetch("backup_voos.json")
+    .then(r => r.json())
+    .then(data => {
+      chegadas = data.chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
+      partidas = data.partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
+      renderizarChegadas();
+      renderizarPartidas();
+    });
 
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
-    const aeronaves = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange");
-    if (aeronaves.length === 0) return;
-
-    const aeronave = aeronaves[0];
-    const pos = e.target;
-    aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
-    aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
-    aeronave.style.background = "blue";
-    pos.classList.remove("livre");
-  }
-});
-
-fetch("backup_voos.json")
-  .then(r => r.json())
-  .then(data => {
-    chegadas = data.chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
-    partidas = data.partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
-    criarTerminais();
-    renderizarChegadas();
-    renderizarPartidas();
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
+      const aeronaves = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange");
+      if (aeronaves.length === 0) return;
+      const aeronave = aeronaves[0];
+      const pos = e.target;
+      aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
+      aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
+      aeronave.style.background = "blue";
+      pos.classList.remove("livre");
+    }
   });
-
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
-    const aeronaves = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange");
-    if (aeronaves.length === 0) return;
-
-    const aeronave = aeronaves[0];
-    const pos = e.target;
-    aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
-    aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
-    aeronave.style.background = "blue";
-    pos.classList.remove("livre");
-  }
 });
-
-    renderizarChegadas();
-    renderizarPartidas();
-  });
-
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
-    const aeronaves = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange");
-    if (aeronaves.length === 0) return;
-
-    const aeronave = aeronaves[0];
-    const pos = e.target;
-    aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
-    aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
-    aeronave.style.background = "blue";
-    pos.classList.remove("livre");
-  }
-});
-
 </script>
 </body>
 </html>
