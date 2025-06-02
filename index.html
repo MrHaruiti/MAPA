@@ -119,20 +119,62 @@ function taxiToTerminal(el, voo) {
     if (top >= 250) {
       clearInterval(animarTaxi);
       voo.status = "Estacionado";
-      selecionarPartida(el, voo);
+      alocarEmPosicao(el, voo);
     }
   }, 20);
+}
+
+function alocarEmPosicao(el, voo) {
+  const terminal = document.querySelectorAll('.terminal')[voo.tps - 1];
+  const posicaoLivre = terminal.querySelector(".posicao.livre");
+  if (posicaoLivre) {
+    el.style.top = (posicaoLivre.offsetTop + terminal.offsetTop) + "px";
+    el.style.left = (posicaoLivre.offsetLeft + terminal.offsetLeft) + "px";
+    posicaoLivre.classList.remove("livre");
+    selecionarPartida(el, voo);
+  } else {
+    alert("Sem posição livre no terminal " + voo.tps);
+  }
 }
 
 function selecionarPartida(el, voo) {
   const opcoes = partidas.filter(p => p.companhia === voo.companhia && p.status === "Aguardando Associacao");
   if (opcoes.length === 0) return alert("Sem voos disponíveis desta companhia.");
-  const escolha = prompt("Escolha o destino:", opcoes.map(o => `${o.voo} - ${o.cidade}`).join(", "));
-  const escolhido = opcoes.find(o => escolha && escolha.includes(o.voo));
-  if (!escolhido) return;
-  escolhido.status = "Programado";
-  el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
-  renderizarPartidas();
+
+  const popup = document.createElement("div");
+  popup.style.position = "fixed";
+  popup.style.top = "50%";
+  popup.style.left = "50%";
+  popup.style.transform = "translate(-50%, -50%)";
+  popup.style.background = "#222";
+  popup.style.color = "#fff";
+  popup.style.padding = "20px";
+  popup.style.border = "2px solid #555";
+  popup.style.zIndex = 1001;
+
+  popup.innerHTML = `<strong>Escolha o destino da aeronave ${voo.voo}:</strong><br><br>`;
+
+  opcoes.forEach(o => {
+    const btn = document.createElement("button");
+    btn.textContent = `${o.voo} - ${o.cidade}`;
+    btn.style.margin = "5px";
+    btn.onclick = () => {
+      o.status = "Programado";
+      el.title = `Partida para ${o.cidade} ${o.horario}`;
+      document.body.removeChild(popup);
+      renderizarPartidas();
+    };
+    popup.appendChild(btn);
+  });
+
+  const cancelar = document.createElement("button");
+  cancelar.textContent = "Cancelar";
+  cancelar.style.marginTop = "10px";
+  cancelar.onclick = () => document.body.removeChild(popup);
+  popup.appendChild(document.createElement("br"));
+  popup.appendChild(cancelar);
+
+  document.body.appendChild(popup);
 }
 
 function showTooltip(target) {
