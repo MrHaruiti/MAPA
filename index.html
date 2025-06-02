@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -11,9 +10,7 @@
     .aeronave-lista, .partida-lista {
       background: #222; padding: 8px; margin-bottom: 6px; border: 1px solid #444;
     }
-    .autorizar, .atribuir {
-      background: #0a0; color: #fff; border: none; padding: 5px; cursor: pointer; margin-top: 5px;
-    }
+    .autorizar { background: #0a0; color: #fff; border: none; padding: 5px; cursor: pointer; margin-top: 5px; }
     .pista {
       position: absolute; top: 50px; left: 50px; width: 800px; height: 30px; background: gray;
     }
@@ -47,21 +44,7 @@
 </div>
 
 <script>
-let chegadas = [
-  { companhia: "EMIRATES AIRLINES", cidade: "Macau", icao: "VMMC", pais: "MACAU", voo: "00471", horario: "00:00", aeronave: "B77W", tps: 2 },
-  { companhia: "EMIRATES AIRLINES", cidade: "Tiruchirappalli", icao: "VOTR", pais: "INDIA", voo: "00395", horario: "00:00", aeronave: "B789", tps: 4 },
-  { companhia: "EMIRATES AIRLINES", cidade: "Novosibirsk", icao: "UNNT", pais: "RUSSIA", voo: "00245", horario: "00:00", aeronave: "B788", tps: 5 },
-  { companhia: "EMIRATES AIRLINES", cidade: "London", icao: "EGLL", pais: "ENGLAND", voo: "00251", horario: "00:15", aeronave: "A388", tps: 1 },
-  { companhia: "EMIRATES AIRLINES", cidade: "San Luís Potosí", icao: "MMSP", pais: "MEXICO", voo: "00173", horario: "00:15", aeronave: "B788", tps: 5 }
-];
-let partidas = [
-  { companhia: "EMIRATES AIRLINES", cidade: "Tóquio", icao: "RJTT", pais: "JAPAN", voo: "00500", horario: "01:00", aeronave: "B77W", tps: 2 },
-  { companhia: "EMIRATES AIRLINES", cidade: "Sydney", icao: "YSSY", pais: "AUSTRALIA", voo: "00502", horario: "01:30", aeronave: "A388", tps: 3 },
-  { companhia: "EMIRATES AIRLINES", cidade: "Cairo", icao: "HECA", pais: "EGYPT", voo: "00504", horario: "02:00", aeronave: "B789", tps: 4 }
-];
-chegadas = chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
-partidas = partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
-
+let chegadas = [], partidas = [];
 const chegadasDiv = document.getElementById("chegadas");
 const partidasDiv = document.getElementById("partidas");
 const aeroporto = document.getElementById("aeroporto");
@@ -146,41 +129,49 @@ function selecionarPartida(el, voo) {
   popup.style.padding = "20px";
   popup.style.border = "2px solid #555";
   popup.style.zIndex = 1001;
-  popup.innerHTML = `<strong>Partidas para ${voo.voo} (${voo.aeronave})</strong><br><br>`;
+  popup.innerHTML = `<strong>Selecionar Partida para ${voo.voo}</strong><br><br>`;
 
-  const opcoes = partidas.filter(p =>
-    p.companhia === voo.companhia &&
-    p.status === "Aguardando Associacao" &&
-    p.aeronave === voo.aeronave
-  );
+  const filtro = document.createElement("input");
+  filtro.placeholder = "Filtrar por destino ou voo...";
+  filtro.style.width = "100%";
+  filtro.style.marginBottom = "10px";
+  popup.appendChild(filtro);
 
-  if (opcoes.length === 0) {
-    popup.innerHTML += "<em>Nenhuma partida compatível disponível no momento.</em><br><br>";
-  } else {
-    const select = document.createElement("select");
-    select.style.width = "100%";
-    opcoes.forEach(o => {
+  const select = document.createElement("select");
+  select.style.width = "100%";
+  popup.appendChild(select);
+
+  function atualizarSelect() {
+    select.innerHTML = "";
+    const texto = filtro.value.toLowerCase();
+    partidas.filter(p => p.status === "Aguardando Associacao" && (
+      p.voo.toLowerCase().includes(texto) ||
+      p.cidade.toLowerCase().includes(texto) ||
+      p.aeronave.toLowerCase().includes(texto)
+    )).forEach(p => {
       const opt = document.createElement("option");
-      opt.value = o.id;
-      opt.textContent = `${o.voo} - ${o.cidade} - ${o.horario}`;
+      opt.value = p.id;
+      opt.textContent = `${p.voo} - ${p.cidade} - ${p.horario}`;
       select.appendChild(opt);
     });
-    popup.appendChild(select);
-
-    const btnConfirmar = document.createElement("button");
-    btnConfirmar.textContent = "Confirmar";
-    btnConfirmar.style.margin = "10px";
-    btnConfirmar.onclick = () => {
-      const escolhido = partidas.find(p => p.id === select.value);
-      if (escolhido) {
-        escolhido.status = "Programado";
-        el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
-        renderizarPartidas();
-      }
-      document.body.removeChild(popup);
-    };
-    popup.appendChild(btnConfirmar);
   }
+
+  filtro.oninput = atualizarSelect;
+  atualizarSelect();
+
+  const btnConfirmar = document.createElement("button");
+  btnConfirmar.textContent = "Confirmar";
+  btnConfirmar.style.margin = "10px";
+  btnConfirmar.onclick = () => {
+    const escolhido = partidas.find(p => p.id === select.value);
+    if (escolhido) {
+      escolhido.status = "Programado";
+      el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
+      renderizarPartidas();
+    }
+    document.body.removeChild(popup);
+  };
+  popup.appendChild(btnConfirmar);
 
   const cancelar = document.createElement("button");
   cancelar.textContent = "Fechar";
@@ -188,15 +179,6 @@ function selecionarPartida(el, voo) {
   popup.appendChild(cancelar);
 
   document.body.appendChild(popup);
-}
-
-function showTooltip(target) {
-  const info = JSON.parse(target.dataset.info);
-  currentTarget = target;
-  tooltip.innerHTML = `<strong>${info.companhia} ${info.voo}</strong><br>Status: ${info.status}`;
-  tooltip.style.display = "block";
-  tooltip.style.top = (target.offsetTop + 25) + "px";
-  tooltip.style.left = (target.offsetLeft + 25) + "px";
 }
 
 function hideTooltip(e) {
@@ -226,9 +208,15 @@ function criarTerminais() {
   }
 }
 
-criarTerminais();
-renderizarChegadas();
-renderizarPartidas();
+fetch("backup_voos.json")
+  .then(r => r.json())
+  .then(data => {
+    chegadas = data.chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
+    partidas = data.partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
+    criarTerminais();
+    renderizarChegadas();
+    renderizarPartidas();
+  });
 </script>
 </body>
 </html>
