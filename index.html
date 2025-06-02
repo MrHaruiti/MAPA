@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Controle de Pátio - Aeroporto</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+    }
+
+    #painel {
+      width: 300px;
+      background: #111;
+      color: #fff;
+      padding: 10px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    #painel h2 {
+      margin-top: 0;
+    }
+
+    .aeronave-lista {
+      background: #222;
+      padding: 8px;
+      margin-bottom: 6px;
+      border: 1px solid #444;
+    }
+
+    .autorizar {
+      background: #0a0;
+      color: #fff;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    #aeroporto {
+      flex: 1;
+      background: #e5e5e5;
+      position: relative;
+      overflow: auto;
+    }
+
+    .pista {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+      width: 800px;
+      height: 30px;
+      background: gray;
+    }
+
+    .taxiway {
+      position: absolute;
+      width: 10px;
+      height: 60px;
+      background: #999;
+    }
+
+    .terminal {
+      position: absolute;
+      width: 360px;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .posicao {
+      width: 20px;
+      height: 20px;
+      margin: 2px;
+      background: #ccc;
+      border: 1px solid #999;
+      position: relative;
+    }
+
+    .posicao.livre:hover {
+      background: #8f8;
+      cursor: pointer;
+    }
+
+    .aeronave {
+      width: 20px;
+      height: 20px;
+      background: blue;
+      color: white;
+      font-size: 10px;
+      text-align: center;
+      line-height: 20px;
+      position: absolute;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: black;
+      color: white;
+      padding: 5px;
+      font-size: 12px;
+      display: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="painel">
+  <h2>Fila de Pouso</h2>
+  <div id="fila"></div>
+</div>
+
+<div id="aeroporto">
+  <div class="pista"></div>
+  <div id="tooltip" class="tooltip"></div>
+</div>
+
+<script>
+  const fila = document.getElementById("fila");
+  const aeroporto = document.getElementById("aeroporto");
+  const tooltip = document.getElementById("tooltip");
+
+  let contadorAeronaves = 0;
+
+  const gerarAeronave = () => ({
+    id: "FL" + (contadorAeronaves++),
+    airline: ["ANA", "JAL", "TAM", "GOL", "AA"][Math.floor(Math.random() * 5)],
+    from: ["HND", "GIG", "LAX", "CDG", "SIN"][Math.floor(Math.random() * 5)],
+    ac: ["A320", "B738", "E190", "A350", "B788"][Math.floor(Math.random() * 5)],
+    chegada: new Date(Date.now() + Math.floor(Math.random() * 600000)).toLocaleTimeString(),
+    status: "Aguardando",
+    terminal: "-",
+    portao: "-"
+  });
+
+  const criarEntradaFila = (info) => {
+    const div = document.createElement("div");
+    div.className = "aeronave-lista";
+    div.innerHTML = `
+      <strong>${info.airline} ${info.id}</strong><br>
+      De: ${info.from}<br>
+      A/C: ${info.ac}<br>
+      Pouso: ${info.chegada}<br>
+      <button class="autorizar">Autorizar</button>
+    `;
+    div.querySelector("button").onclick = () => {
+      autorizarPouso(info);
+      div.remove();
+    };
+    fila.appendChild(div);
+  };
+
+  function autorizarPouso(info) {
+    info.status = "Taxiando";
+    const el = document.createElement("div");
+    el.className = "aeronave";
+    el.innerText = info.id;
+    el.style.top = "50px";
+    el.style.left = "60px";
+    el.dataset.info = JSON.stringify(info);
+    el.onmouseenter = showTooltip;
+    el.onmouseleave = () => tooltip.style.display = "none";
+    aeroporto.appendChild(el);
+
+    setTimeout(() => {
+      el.dataset.status = "Aguardando estacionamento";
+      info.status = "Aguardando estacionamento";
+    }, 3000);
+
+    el.onclick = () => {
+      selecionarPosicao(el, info);
+    };
+  }
+
+  function showTooltip(evt) {
+    const info = JSON.parse(evt.target.dataset.info);
+    tooltip.innerHTML = `
+      <strong>${info.airline} ${info.id}</strong><br>
+      De: ${info.from}<br>
+      A/C: ${info.ac}<br>
+      Pouso: ${info.chegada}<br>
+      Status: ${info.status}<br>
+      TPS: ${info.terminal}<br>
+      Portão: ${info.portao}
+    `;
+    tooltip.style.display = "block";
+    tooltip.style.top = (evt.clientY + 10) + "px";
+    tooltip.style.left = (evt.clientX + 10) + "px";
+  }
+
+  function selecionarPosicao(el, info) {
+    const posicoes = document.querySelectorAll(".posicao.livre");
+    posicoes.forEach(p => {
+      p.onclick = () => {
+        p.classList.remove("livre");
+        p.appendChild(el);
+        el.style.position = "static";
+        el.style.margin = "0";
+        el.onclick = null;
+        info.status = "Estacionado";
+        info.terminal = p.dataset.terminal;
+        info.portao = p.dataset.portao;
+        p.title = `${info.airline} ${info.id}`;
+      };
+    });
+    alert("Clique em uma posição livre para estacionar a aeronave.");
+  }
+
+  function criarTerminais() {
+    for (let t = 1; t <= 10; t++) {
+      const term = document.createElement("div");
+      term.className = "terminal";
+      term.style.top = (120 + t * 60) + "px";
+      term.style.left = "200px";
+      for (let p = 1; p <= 36; p++) {
+        const pos = document.createElement("div");
+        pos.className = "posicao livre";
+        pos.dataset.terminal = "T" + t;
+        pos.dataset.portao = "G" + p;
+        term.appendChild(pos);
+      }
+      aeroporto.appendChild(term);
+
+      const tx = document.createElement("div");
+      tx.className = "taxiway";
+      tx.style.top = (90 + t * 60) + "px";
+      tx.style.left = "150px";
+      aeroporto.appendChild(tx);
+    }
+  }
+
+  criarTerminais();
+
+  setInterval(() => {
+    const nova = gerarAeronave();
+    criarEntradaFila(nova);
+  }, 10000);
+</script>
+</body>
+</html>
