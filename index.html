@@ -20,10 +20,6 @@
       overflow-y: auto;
     }
 
-    #painel h2 {
-      margin-top: 0;
-    }
-
     .aeronave-lista {
       background: #222;
       padding: 8px;
@@ -31,7 +27,7 @@
       border: 1px solid #444;
     }
 
-    .autorizar {
+    .autorizar, .decolar {
       background: #0a0;
       color: #fff;
       border: none;
@@ -122,7 +118,6 @@
   const fila = document.getElementById("fila");
   const aeroporto = document.getElementById("aeroporto");
   const tooltip = document.getElementById("tooltip");
-
   let contadorAeronaves = 0;
 
   const gerarAeronave = () => ({
@@ -154,25 +149,41 @@
   };
 
   function autorizarPouso(info) {
-    info.status = "Taxiando";
+    info.status = "Pousando";
     const el = document.createElement("div");
     el.className = "aeronave";
     el.innerText = info.id;
     el.style.top = "50px";
     el.style.left = "60px";
     el.dataset.info = JSON.stringify(info);
-    el.onmouseenter = showTooltip;
-    el.onmouseleave = () => tooltip.style.display = "none";
     aeroporto.appendChild(el);
 
-    setTimeout(() => {
-      el.dataset.status = "Aguardando estacionamento";
-      info.status = "Aguardando estacionamento";
-    }, 3000);
+    let left = 60;
+    const animar = setInterval(() => {
+      left += 2;
+      el.style.left = left + "px";
+      if (left >= 150) {
+        clearInterval(animar);
+        info.status = "Taxiando para terminal";
+        taxiToTerminal(el, info);
+      }
+    }, 20);
 
-    el.onclick = () => {
-      selecionarPosicao(el, info);
-    };
+    el.onmouseenter = showTooltip;
+    el.onmouseleave = () => tooltip.style.display = "none";
+  }
+
+  function taxiToTerminal(el, info) {
+    let top = 50;
+    const animarTaxi = setInterval(() => {
+      top += 2;
+      el.style.top = top + "px";
+      if (top >= 250) {
+        clearInterval(animarTaxi);
+        info.status = "Aguardando estacionamento";
+        selecionarPosicao(el, info);
+      }
+    }, 20);
   }
 
   function showTooltip(evt) {
@@ -184,11 +195,13 @@
       Pouso: ${info.chegada}<br>
       Status: ${info.status}<br>
       TPS: ${info.terminal}<br>
-      Portão: ${info.portao}
+      Portão: ${info.portao}<br>
+      <button class='decolar' onclick='decolarAeronave(event, this)'>Preparar Decolagem</button>
     `;
     tooltip.style.display = "block";
     tooltip.style.top = (evt.clientY + 10) + "px";
     tooltip.style.left = (evt.clientX + 10) + "px";
+    tooltip.currentTarget = evt.target;
   }
 
   function selecionarPosicao(el, info) {
@@ -209,12 +222,35 @@
     alert("Clique em uma posição livre para estacionar a aeronave.");
   }
 
+  function decolarAeronave(evt, btn) {
+    const el = tooltip.currentTarget;
+    let top = el.offsetTop;
+    let left = el.offsetLeft;
+    el.style.position = "absolute";
+    el.parentElement.removeChild(el);
+    aeroporto.appendChild(el);
+
+    const animar = setInterval(() => {
+      if (left > 900 || top < 0) {
+        clearInterval(animar);
+        el.remove();
+        tooltip.style.display = "none";
+        return;
+      }
+      top -= 2;
+      left += 3;
+      el.style.top = top + "px";
+      el.style.left = left + "px";
+    }, 20);
+  }
+
   function criarTerminais() {
+    let row = 0, col = 0;
     for (let t = 1; t <= 10; t++) {
       const term = document.createElement("div");
       term.className = "terminal";
-      term.style.top = (120 + t * 60) + "px";
-      term.style.left = "200px";
+      term.style.top = (300 + row * 200) + "px";
+      term.style.left = (100 + col * 400) + "px";
       for (let p = 1; p <= 36; p++) {
         const pos = document.createElement("div");
         pos.className = "posicao livre";
@@ -226,14 +262,16 @@
 
       const tx = document.createElement("div");
       tx.className = "taxiway";
-      tx.style.top = (90 + t * 60) + "px";
-      tx.style.left = "150px";
+      tx.style.top = (280 + row * 200) + "px";
+      tx.style.left = (80 + col * 400) + "px";
       aeroporto.appendChild(tx);
+
+      col++;
+      if (col >= 5) { col = 0; row++; }
     }
   }
 
   criarTerminais();
-
   setInterval(() => {
     const nova = gerarAeronave();
     criarEntradaFila(nova);
