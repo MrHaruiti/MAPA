@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -138,8 +139,11 @@ function alocarEmPosicao(el, voo) {
 }
 
 function selecionarPartida(el, voo) {
-  const opcoes = partidas.filter(p => p.companhia === voo.companhia && p.status === "Aguardando Associacao");
-  if (opcoes.length === 0) return alert("Sem voos disponíveis desta companhia.");
+  const opcoes = partidas.filter(p =>
+    p.companhia === voo.companhia &&
+    p.status === "Aguardando Associacao" &&
+    p.aeronave === voo.aeronave
+  );
 
   const popup = document.createElement("div");
   popup.style.position = "fixed";
@@ -151,27 +155,35 @@ function selecionarPartida(el, voo) {
   popup.style.padding = "20px";
   popup.style.border = "2px solid #555";
   popup.style.zIndex = 1001;
+  popup.innerHTML = `<strong>Partidas para ${voo.voo} (${voo.aeronave})</strong><br><br>`;
 
-  popup.innerHTML = `<strong>Escolha o destino da aeronave ${voo.voo}:</strong><br><br>`;
-
+  const select = document.createElement("select");
+  select.style.width = "100%";
   opcoes.forEach(o => {
-    const btn = document.createElement("button");
-    btn.textContent = `${o.voo} - ${o.cidade}`;
-    btn.style.margin = "5px";
-    btn.onclick = () => {
-      o.status = "Programado";
-      el.title = `Partida para ${o.cidade} ${o.horario}`;
-      document.body.removeChild(popup);
-      renderizarPartidas();
-    };
-    popup.appendChild(btn);
+    const opt = document.createElement("option");
+    opt.value = o.id;
+    opt.textContent = `${o.voo} - ${o.cidade} - ${o.horario}`;
+    select.appendChild(opt);
   });
+  popup.appendChild(select);
+
+  const btnConfirmar = document.createElement("button");
+  btnConfirmar.textContent = "Confirmar";
+  btnConfirmar.style.margin = "10px";
+  btnConfirmar.onclick = () => {
+    const escolhido = partidas.find(p => p.id === select.value);
+    if (escolhido) {
+      escolhido.status = "Programado";
+      el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
+      renderizarPartidas();
+    }
+    document.body.removeChild(popup);
+  };
+  popup.appendChild(btnConfirmar);
 
   const cancelar = document.createElement("button");
   cancelar.textContent = "Cancelar";
-  cancelar.style.marginTop = "10px";
   cancelar.onclick = () => document.body.removeChild(popup);
-  popup.appendChild(document.createElement("br"));
   popup.appendChild(cancelar);
 
   document.body.appendChild(popup);
