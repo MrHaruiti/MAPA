@@ -109,7 +109,7 @@ function autorizarPouso(voo) {
       taxiToTerminal(el, voo);
     }
   }, 20);
-  el.onclick = (evt) => { evt.stopPropagation(); showTooltip(el); };
+  el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
 }
 
 function taxiToTerminal(el, voo) {
@@ -132,19 +132,10 @@ function alocarEmPosicao(el, voo) {
     el.style.top = (posicaoLivre.offsetTop + terminal.offsetTop) + "px";
     el.style.left = (posicaoLivre.offsetLeft + terminal.offsetLeft) + "px";
     posicaoLivre.classList.remove("livre");
-    selecionarPartida(el, voo);
-  } else {
-    alert("Sem posição livre no terminal " + voo.tps);
   }
 }
 
 function selecionarPartida(el, voo) {
-  const opcoes = partidas.filter(p =>
-    p.companhia === voo.companhia &&
-    p.status === "Aguardando Associacao" &&
-    p.aeronave === voo.aeronave
-  );
-
   const popup = document.createElement("div");
   popup.style.position = "fixed";
   popup.style.top = "50%";
@@ -157,32 +148,42 @@ function selecionarPartida(el, voo) {
   popup.style.zIndex = 1001;
   popup.innerHTML = `<strong>Partidas para ${voo.voo} (${voo.aeronave})</strong><br><br>`;
 
-  const select = document.createElement("select");
-  select.style.width = "100%";
-  opcoes.forEach(o => {
-    const opt = document.createElement("option");
-    opt.value = o.id;
-    opt.textContent = `${o.voo} - ${o.cidade} - ${o.horario}`;
-    select.appendChild(opt);
-  });
-  popup.appendChild(select);
+  const opcoes = partidas.filter(p =>
+    p.companhia === voo.companhia &&
+    p.status === "Aguardando Associacao" &&
+    p.aeronave === voo.aeronave
+  );
 
-  const btnConfirmar = document.createElement("button");
-  btnConfirmar.textContent = "Confirmar";
-  btnConfirmar.style.margin = "10px";
-  btnConfirmar.onclick = () => {
-    const escolhido = partidas.find(p => p.id === select.value);
-    if (escolhido) {
-      escolhido.status = "Programado";
-      el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
-      renderizarPartidas();
-    }
-    document.body.removeChild(popup);
-  };
-  popup.appendChild(btnConfirmar);
+  if (opcoes.length === 0) {
+    popup.innerHTML += "<em>Nenhuma partida compatível disponível no momento.</em><br><br>";
+  } else {
+    const select = document.createElement("select");
+    select.style.width = "100%";
+    opcoes.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.id;
+      opt.textContent = `${o.voo} - ${o.cidade} - ${o.horario}`;
+      select.appendChild(opt);
+    });
+    popup.appendChild(select);
+
+    const btnConfirmar = document.createElement("button");
+    btnConfirmar.textContent = "Confirmar";
+    btnConfirmar.style.margin = "10px";
+    btnConfirmar.onclick = () => {
+      const escolhido = partidas.find(p => p.id === select.value);
+      if (escolhido) {
+        escolhido.status = "Programado";
+        el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
+        renderizarPartidas();
+      }
+      document.body.removeChild(popup);
+    };
+    popup.appendChild(btnConfirmar);
+  }
 
   const cancelar = document.createElement("button");
-  cancelar.textContent = "Cancelar";
+  cancelar.textContent = "Fechar";
   cancelar.onclick = () => document.body.removeChild(popup);
   popup.appendChild(cancelar);
 
