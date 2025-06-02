@@ -10,128 +10,170 @@
     .aeronave-lista, .partida-lista {
       background: #222; padding: 8px; margin-bottom: 6px; border: 1px solid #444;
     }
-    .autorizar, .atribuir { background: #0a0; color: #fff; border: none; padding: 5px; cursor: pointer; margin-top: 5px; }
-    .pista { position: absolute; top: 50px; left: 50px; width: 800px; height: 30px; background: gray; }
-    .terminal { position: absolute; width: 360px; display: flex; flex-wrap: wrap; }
-    .posicao { width: 20px; height: 20px; margin: 2px; background: #ccc; border: 1px solid #999; position: relative; }
+    .autorizar, .atribuir {
+      background: #0a0; color: #fff; border: none; padding: 5px; cursor: pointer; margin-top: 5px;
+    }
+    .pista {
+      position: absolute; top: 50px; left: 50px; width: 800px; height: 30px; background: gray;
+    }
+    .terminal {
+      position: absolute; width: 360px; display: flex; flex-wrap: wrap;
+    }
+    .posicao {
+      width: 20px; height: 20px; margin: 2px; background: #ccc; border: 1px solid #999; position: relative;
+    }
     .posicao.livre:hover { background: #8f8; cursor: pointer; }
-    .aeronave { width: 20px; height: 20px; background: blue; color: white; font-size: 10px; text-align: center; line-height: 20px; position: absolute; }
-    .tooltip { position: absolute; background: black; color: white; padding: 5px; font-size: 12px; display: none; z-index: 1000; }
+    .aeronave {
+      width: 20px; height: 20px; background: blue; color: white; font-size: 10px; text-align: center;
+      line-height: 20px; position: absolute;
+    }
+    .tooltip {
+      position: absolute; background: black; color: white; padding: 5px; font-size: 12px; display: none;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
-  <div id="painel">
-    <h2>Chegadas Programadas</h2>
-    <div id="chegadas"></div>
-    <h2>Partidas Disponíveis</h2>
-    <div id="partidas"></div>
-  </div>
-  <div id="aeroporto" onclick="hideTooltip(event)">
-    <div class="pista"></div>
-    <div id="tooltip" class="tooltip"></div>
-  </div>
+<div id="painel">
+  <h2>Chegadas Programadas</h2>
+  <div id="chegadas"></div>
+  <h2>Partidas Disponíveis</h2>
+  <div id="partidas"></div>
+</div>
+<div id="aeroporto" onclick="hideTooltip(event)">
+  <div class="pista"></div>
+  <div id="tooltip" class="tooltip"></div>
+</div>
 
-  <script>
-    let chegadas = [], partidas = [], contadorAeronaves = 0, currentTarget = null;
-    const chegadasDiv = document.getElementById("chegadas");
-    const partidasDiv = document.getElementById("partidas");
-    const aeroporto = document.getElementById("aeroporto");
-    const tooltip = document.getElementById("tooltip");
+<script>
+let chegadas = [
+  { companhia: "EMIRATES AIRLINES", cidade: "Macau", icao: "VMMC", pais: "MACAU", voo: "00471", horario: "00:00", aeronave: "B77W", tps: 2 },
+  { companhia: "EMIRATES AIRLINES", cidade: "Tiruchirappalli", icao: "VOTR", pais: "INDIA", voo: "00395", horario: "00:00", aeronave: "B789", tps: 4 },
+  { companhia: "EMIRATES AIRLINES", cidade: "Novosibirsk", icao: "UNNT", pais: "RUSSIA", voo: "00245", horario: "00:00", aeronave: "B788", tps: 5 },
+  { companhia: "EMIRATES AIRLINES", cidade: "London", icao: "EGLL", pais: "ENGLAND", voo: "00251", horario: "00:15", aeronave: "A388", tps: 1 },
+  { companhia: "EMIRATES AIRLINES", cidade: "San Luís Potosí", icao: "MMSP", pais: "MEXICO", voo: "00173", horario: "00:15", aeronave: "B788", tps: 5 }
+];
+let partidas = [
+  { companhia: "EMIRATES AIRLINES", cidade: "Tóquio", icao: "RJTT", pais: "JAPAN", voo: "00500", horario: "01:00", aeronave: "B77W", tps: 2 },
+  { companhia: "EMIRATES AIRLINES", cidade: "Sydney", icao: "YSSY", pais: "AUSTRALIA", voo: "00502", horario: "01:30", aeronave: "A388", tps: 3 },
+  { companhia: "EMIRATES AIRLINES", cidade: "Cairo", icao: "HECA", pais: "EGYPT", voo: "00504", horario: "02:00", aeronave: "B789", tps: 4 }
+];
+chegadas = chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
+partidas = partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
 
-    async function carregarVoos() {
-      const resp = await fetch("backup_voos (4).json");
-      const data = await resp.json();
-      chegadas = data.chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
-      partidas = data.partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
-      renderizarChegadas();
-      renderizarPartidas();
+const chegadasDiv = document.getElementById("chegadas");
+const partidasDiv = document.getElementById("partidas");
+const aeroporto = document.getElementById("aeroporto");
+const tooltip = document.getElementById("tooltip");
+let currentTarget = null;
+
+function renderizarChegadas() {
+  chegadasDiv.innerHTML = "";
+  chegadas.forEach((v) => {
+    const div = document.createElement("div");
+    div.className = "aeronave-lista";
+    div.innerHTML = `<strong>${v.companhia} ${v.voo}</strong><br>De: ${v.cidade}<br>A/C: ${v.aeronave}<br>Horário: ${v.horario}<br>Status: ${v.status}<br><button class='autorizar'>Autorizar Pouso</button>`;
+    div.querySelector("button").onclick = () => autorizarPouso(v);
+    chegadasDiv.appendChild(div);
+  });
+}
+
+function renderizarPartidas() {
+  partidasDiv.innerHTML = "";
+  partidas.filter(p => p.status === "Aguardando Associacao").forEach((v) => {
+    const div = document.createElement("div");
+    div.className = "partida-lista";
+    div.innerHTML = `<strong>${v.companhia} ${v.voo}</strong><br>Para: ${v.cidade}<br>A/C: ${v.aeronave}<br>Horário: ${v.horario}<br>Status: ${v.status}`;
+    partidasDiv.appendChild(div);
+  });
+}
+
+function autorizarPouso(voo) {
+  voo.status = "Pousando";
+  renderizarChegadas();
+  const el = document.createElement("div");
+  el.className = "aeronave";
+  el.innerText = voo.voo;
+  el.style.top = "50px";
+  el.style.left = "60px";
+  el.dataset.info = JSON.stringify(voo);
+  aeroporto.appendChild(el);
+  let left = 60;
+  const animar = setInterval(() => {
+    left += 2;
+    el.style.left = left + "px";
+    if (left >= 150) {
+      clearInterval(animar);
+      voo.status = "Taxiando";
+      taxiToTerminal(el, voo);
     }
+  }, 20);
+  el.onclick = (evt) => { evt.stopPropagation(); showTooltip(el); };
+}
 
-    function renderizarChegadas() {
-      chegadasDiv.innerHTML = "";
-      chegadas.forEach((v) => {
-        const div = document.createElement("div");
-        div.className = "aeronave-lista";
-        div.innerHTML = `<strong>${v.companhia} ${v.voo}</strong><br>De: ${v.cidade}<br>A/C: ${v.aeronave}<br>Horário: ${v.horario}<br>Status: ${v.status}<br><button class='autorizar'>Autorizar Pouso</button>`;
-        div.querySelector("button").onclick = () => autorizarPouso(v);
-        chegadasDiv.appendChild(div);
-      });
+function taxiToTerminal(el, voo) {
+  let top = 50;
+  const animarTaxi = setInterval(() => {
+    top += 2;
+    el.style.top = top + "px";
+    if (top >= 250) {
+      clearInterval(animarTaxi);
+      voo.status = "Estacionado";
+      selecionarPartida(el, voo);
     }
+  }, 20);
+}
 
-    function renderizarPartidas() {
-      partidasDiv.innerHTML = "";
-      partidas.filter(p => p.status === "Aguardando Associacao").forEach((v) => {
-        const div = document.createElement("div");
-        div.className = "partida-lista";
-        div.innerHTML = `<strong>${v.companhia} ${v.voo}</strong><br>Para: ${v.cidade}<br>A/C: ${v.aeronave}<br>Horário: ${v.horario}<br>Status: ${v.status}`;
-        partidasDiv.appendChild(div);
-      });
+function selecionarPartida(el, voo) {
+  const opcoes = partidas.filter(p => p.companhia === voo.companhia && p.status === "Aguardando Associacao");
+  if (opcoes.length === 0) return alert("Sem voos disponíveis desta companhia.");
+  const escolha = prompt("Escolha o destino:", opcoes.map(o => `${o.voo} - ${o.cidade}`).join(", "));
+  const escolhido = opcoes.find(o => escolha && escolha.includes(o.voo));
+  if (!escolhido) return;
+  escolhido.status = "Programado";
+  el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
+  renderizarPartidas();
+}
+
+function showTooltip(target) {
+  const info = JSON.parse(target.dataset.info);
+  currentTarget = target;
+  tooltip.innerHTML = `<strong>${info.companhia} ${info.voo}</strong><br>Status: ${info.status}`;
+  tooltip.style.display = "block";
+  tooltip.style.top = (target.offsetTop + 25) + "px";
+  tooltip.style.left = (target.offsetLeft + 25) + "px";
+}
+
+function hideTooltip(e) {
+  if (e.target !== currentTarget && !tooltip.contains(e.target)) {
+    tooltip.style.display = "none";
+    currentTarget = null;
+  }
+}
+
+function criarTerminais() {
+  let row = 0, col = 0;
+  for (let t = 1; t <= 10; t++) {
+    const term = document.createElement("div");
+    term.className = "terminal";
+    term.style.top = (300 + row * 200) + "px";
+    term.style.left = (100 + col * 400) + "px";
+    for (let p = 1; p <= 36; p++) {
+      const pos = document.createElement("div");
+      pos.className = "posicao livre";
+      pos.dataset.terminal = "T" + t;
+      pos.dataset.portao = "G" + p;
+      term.appendChild(pos);
     }
+    aeroporto.appendChild(term);
+    col++;
+    if (col >= 5) { col = 0; row++; }
+  }
+}
 
-    function autorizarPouso(voo) {
-      voo.status = "Pousando";
-      renderizarChegadas();
-      const el = document.createElement("div");
-      el.className = "aeronave";
-      el.innerText = voo.voo;
-      el.style.top = "50px";
-      el.style.left = "60px";
-      el.dataset.info = JSON.stringify(voo);
-      aeroporto.appendChild(el);
-      let left = 60;
-      const animar = setInterval(() => {
-        left += 2;
-        el.style.left = left + "px";
-        if (left >= 150) {
-          clearInterval(animar);
-          voo.status = "Taxiando";
-          taxiToTerminal(el, voo);
-        }
-      }, 20);
-      el.onclick = (evt) => { evt.stopPropagation(); showTooltip(el); };
-    }
-
-    function taxiToTerminal(el, voo) {
-      let top = 50;
-      const animarTaxi = setInterval(() => {
-        top += 2;
-        el.style.top = top + "px";
-        if (top >= 250) {
-          clearInterval(animarTaxi);
-          voo.status = "Estacionado";
-          selecionarPartida(el, voo);
-        }
-      }, 20);
-    }
-
-    function selecionarPartida(el, voo) {
-      const opcoes = partidas.filter(p => p.companhia === voo.companhia && p.status === "Aguardando Associacao");
-      if (opcoes.length === 0) return alert("Sem voos disponíveis desta companhia.");
-      const escolha = prompt("Escolha o destino:", opcoes.map(o => `${o.voo} - ${o.cidade}`).join(", "));
-      const escolhido = opcoes.find(o => escolha && escolha.includes(o.voo));
-      if (!escolhido) return;
-      escolhido.status = "Programado";
-      el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
-      renderizarPartidas();
-    }
-
-    function showTooltip(target) {
-      const info = JSON.parse(target.dataset.info);
-      currentTarget = target;
-      tooltip.innerHTML = `<strong>${info.companhia} ${info.voo}</strong><br>Status: ${info.status}`;
-      tooltip.style.display = "block";
-      tooltip.style.top = (target.offsetTop + 25) + "px";
-      tooltip.style.left = (target.offsetLeft + 25) + "px";
-    }
-
-    function hideTooltip(e) {
-      if (e.target !== currentTarget && !tooltip.contains(e.target)) {
-        tooltip.style.display = "none";
-        currentTarget = null;
-      }
-    }
-
-    carregarVoos();
-  </script>
+criarTerminais();
+renderizarChegadas();
+renderizarPartidas();
+</script>
 </body>
 </html>
