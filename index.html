@@ -188,7 +188,27 @@ function hideTooltip(e) {
   }
 }
 
+
 function criarTerminais() {
+  const totalTerminais = 10;
+  const posicoesPorTerminal = 36;
+  for (let t = 0; t < totalTerminais; t++) {
+    const term = document.createElement("div");
+    term.className = "terminal";
+    const isTopo = t < 5;
+    term.style.top = isTopo ? "100px" : "600px";
+    term.style.left = (100 + (t % 5) * 400) + "px";
+    for (let p = 1; p <= posicoesPorTerminal; p++) {
+      const pos = document.createElement("div");
+      pos.className = "posicao livre";
+      pos.dataset.terminal = "T" + (t + 1);
+      pos.dataset.portao = "G" + p;
+      term.appendChild(pos);
+    }
+    aeroporto.appendChild(term);
+  }
+}
+
   let row = 0, col = 0;
   for (let t = 1; t <= 10; t++) {
     const term = document.createElement("div");
@@ -208,6 +228,7 @@ function criarTerminais() {
   }
 }
 
+criarTerminais();
 fetch("backup_voos.json")
   .then(r => r.json())
   .then(data => {
