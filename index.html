@@ -222,22 +222,7 @@ function criarTerminais() {
   }
 }
 
-  let row = 0, col = 0;
-  for (let t = 1; t <= 10; t++) {
-    const term = document.createElement("div");
-    term.className = "terminal";
-    term.style.top = (300 + row * 200) + "px";
-    term.style.left = (100 + col * 400) + "px";
-    for (let p = 1; p <= 36; p++) {
-      const pos = document.createElement("div");
-      pos.className = "posicao livre";
-      pos.dataset.terminal = "T" + t;
-      pos.dataset.portao = "G" + p;
-      term.appendChild(pos);
-    }
-    aeroporto.appendChild(term);
-    col++;
-    if (col >= 5) { col = 0; row++; }
+  
   }
 }
 
@@ -263,6 +248,9 @@ fetch("backup_voos.json")
     chegadas = data.chegadas.map((v, i) => ({...v, id: "CHG" + i, status: "Aguardando Autorizacao"}));
     partidas = data.partidas.map((v, i) => ({...v, id: "PRT" + i, status: "Aguardando Associacao"}));
     criarTerminais();
+    renderizarChegadas();
+    renderizarPartidas();
+  });
 
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
@@ -281,6 +269,21 @@ document.addEventListener("click", (e) => {
     renderizarChegadas();
     renderizarPartidas();
   });
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
+    const aeronaves = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange");
+    if (aeronaves.length === 0) return;
+
+    const aeronave = aeronaves[0];
+    const pos = e.target;
+    aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
+    aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
+    aeronave.style.background = "blue";
+    pos.classList.remove("livre");
+  }
+});
+
 </script>
 </body>
 </html>
