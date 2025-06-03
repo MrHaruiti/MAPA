@@ -1,175 +1,78 @@
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Aeroporto - Taxiways Inferiores Conectadas ao Pátio</title>
+  <title>Painel Interativo - Aeroporto</title>
   <style>
     body {
       margin: 0;
-      background: #2b2b2b;
-      overflow-x: scroll;
-      overflow-y: hidden;
+      overflow: hidden;
     }
-
     #mapa {
       position: relative;
-      width: 3000px;
-      height: 3100px;
-      background: linear-gradient(to right, #444, #555);
+      width: 1152px;
+      height: 512px;
+      background-image: url('aeroporto_layout_base.png');
+      background-size: cover;
+      border: 2px solid #000;
     }
-
-    .pista, .pista-inferior {
+    .taxiway, .posicao, .pista {
       position: absolute;
-      height: 100px;
-      width: 100%;
-      background: #333;
-      border: 2px solid #999;
+      border: 1px solid rgba(255,255,255,0.4);
+      cursor: pointer;
+      color: white;
+      font-size: 10px;
+      text-align: center;
+      background-color: rgba(0,0,0,0.3);
     }
-
-    .pista {
-      top: 150px;
-    }
-
-    .pista-inferior {
-      top: 2400px;
-    }
-
-    .linha-central, .linha-central-inferior {
+    .tooltip {
       position: absolute;
-      height: 4px;
-      width: 100%;
-      background: repeating-linear-gradient(
-        to right,
-        white 0px,
-        white 30px,
-        transparent 30px,
-        transparent 60px
-      );
-    }
-
-    .linha-central {
-      top: 200px;
-    }
-
-    .linha-central-inferior {
-      top: 2450px;
-    }
-
-    .taxiway, .taxiway-continuacao, .taxiway-final,
-    .taxiway-inferior, .taxiway-continuacao-inferior, .taxiway-final-inferior,
-    .taxiway-patio-inferior, .taxiway-patio-conexao {
-      position: absolute;
-      width: 20px;
-      height: 80px;
-      background: #888;
-    }
-
-    .taxiway { top: 250px; }
-    .taxiway-continuacao { top: 350px; }
-    .taxiway-final { top: 450px; }
-
-    .taxiway-inferior { top: 2300px; }
-    .taxiway-continuacao-inferior { top: 2200px; }
-    .taxiway-final-inferior { top: 2100px; }
-
-    .taxiway-patio-inferior { top: 1730px; }
-    .taxiway-patio-conexao { top: 1810px; }
-
-    .taxiway-paralela, .taxiway-paralela-inferior {
-      position: absolute;
-      height: 20px;
-      width: 100%;
-      background: #555;
-    }
-
-    .paralela-superior { top: 330px; }
-    .paralela-inferior { top: 430px; }
-
-    .paralela-inferior-1 { top: 2180px; }
-    .paralela-inferior-2 { top: 2080px; }
-
-    .patio {
-      position: absolute;
-      top: 530px;
-      left: 0;
-      width: 100%;
-      height: 1200px;
-      background: #1e1e1e;
-      border-top: 3px solid #777;
+      background-color: #222;
+      color: #fff;
+      padding: 5px;
+      font-size: 12px;
+      display: none;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
   <div id="mapa">
-    <!-- Pista superior -->
-    <div class="pista"></div>
-    <div class="linha-central"></div>
-    <div class="taxiway-paralela paralela-superior"></div>
-    <div class="taxiway-paralela paralela-inferior"></div>
+    <!-- Posições TPS1 -->
+    <!-- Exemplo de posição -->
+    <div class="posicao" style="left:80px; top:70px; width:18px; height:18px;" onclick="mostrarInfo('Posição 101')">101</div>
+    <div class="posicao" style="left:80px; top:100px; width:18px; height:18px;" onclick="mostrarInfo('Posição 102')">102</div>
 
-    <!-- Pátio -->
-    <div class="patio"></div>
+    <!-- Pista superior -->
+    <div class="pista" style="left:0px; top:0px; width:1152px; height:40px;" onclick="mostrarInfo('Pista 1 (Superior)')">Pista 1</div>
 
     <!-- Pista inferior -->
-    <div class="pista-inferior"></div>
-    <div class="linha-central-inferior"></div>
-    <div class="taxiway-paralela-inferior paralela-inferior-1"></div>
-    <div class="taxiway-paralela-inferior paralela-inferior-2"></div>
+    <div class="pista" style="left:0px; top:472px; width:1152px; height:40px;" onclick="mostrarInfo('Pista 2 (Inferior)')">Pista 2</div>
 
-    <script>
-      const mapa = document.getElementById('mapa');
-      const totalTaxiways = 10;
-      const spacing = 3000 / (totalTaxiways - 1);
-
-      for (let i = 0; i < totalTaxiways; i++) {
-        const x = i * spacing - 10;
-
-        // Taxiways superiores
-        const taxiway = document.createElement('div');
-        taxiway.className = 'taxiway';
-        taxiway.style.left = x + 'px';
-        mapa.appendChild(taxiway);
-
-        const continuacao = document.createElement('div');
-        continuacao.className = 'taxiway-continuacao';
-        continuacao.style.left = x + 'px';
-        mapa.appendChild(continuacao);
-
-        const final = document.createElement('div');
-        final.className = 'taxiway-final';
-        final.style.left = x + 'px';
-        mapa.appendChild(final);
-
-        // Taxiways inferiores
-        const taxiwayInf = document.createElement('div');
-        taxiwayInf.className = 'taxiway-inferior';
-        taxiwayInf.style.left = x + 'px';
-        mapa.appendChild(taxiwayInf);
-
-        const contInf = document.createElement('div');
-        contInf.className = 'taxiway-continuacao-inferior';
-        contInf.style.left = x + 'px';
-        mapa.appendChild(contInf);
-
-        const finalInf = document.createElement('div');
-        finalInf.className = 'taxiway-final-inferior';
-        finalInf.style.left = x + 'px';
-        mapa.appendChild(finalInf);
-
-        // Taxiways saindo da parte inferior do pátio
-        const patioInferior = document.createElement('div');
-        patioInferior.className = 'taxiway-patio-inferior';
-        patioInferior.style.left = x + 'px';
-        mapa.appendChild(patioInferior);
-
-        // Conexão entre taxiway final e taxiway do pátio inferior
-        const conexao = document.createElement('div');
-        conexao.className = 'taxiway-patio-conexao';
-        conexao.style.left = x + 'px';
-        mapa.appendChild(conexao);
-      }
-    </script>
+    <!-- Taxiway A1 -->
+    <div class="taxiway" style="left:150px; top:40px; width:20px; height:100px;" onclick="mostrarInfo('Taxiway A1')">A1</div>
   </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    function mostrarInfo(texto) {
+      const tooltip = document.getElementById("tooltip");
+      tooltip.innerText = texto;
+      tooltip.style.display = "block";
+      document.addEventListener("mousemove", (e) => {
+        tooltip.style.left = (e.pageX + 10) + "px";
+        tooltip.style.top = (e.pageY + 10) + "px";
+      });
+    }
+    document.addEventListener("click", function(e) {
+      if (!e.target.classList.contains('posicao') &&
+          !e.target.classList.contains('taxiway') &&
+          !e.target.classList.contains('pista')) {
+        document.getElementById("tooltip").style.display = "none";
+      }
+    });
+  </script>
 </body>
 </html>
