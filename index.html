@@ -10,6 +10,7 @@
     }
     body {
       margin: 0;
+      margin-left: 360px;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       height: 100vh;
@@ -18,6 +19,10 @@
       color: #222;
     }
     #painel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
       width: 360px;
       background: #111;
       color: #fff;
@@ -199,6 +204,26 @@
       box-shadow: inset 0 0 12px #000;
       font-size: 15px;
     }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        margin-left: 0;
+      }
+
+      #painel {
+        position: static;
+        width: 100%;
+        height: auto;
+        box-shadow: none;
+      }
+
+      #aeroporto {
+        margin-left: 0;
+        min-width: auto;
+      }
+    }
+
   </style>
 </head>
 <body>
