@@ -96,7 +96,8 @@ function autorizarPouso(voo) {
   }, 20);
   el.onclick = (evt) => {
   evt.stopPropagation();
-  if (voo.estacionado) selecionarPartida(el, voo);
+  const dados = JSON.parse(el.dataset.info);
+  if (dados.estacionado) selecionarPartida(el, voo, el);
 };
 }
 
@@ -113,7 +114,7 @@ function taxiToTerminal(el, voo) {
   }, 20);
 }
 
-function selecionarPartida(el, voo) {
+function selecionarPartida(el, voo, aeronaveEl) {
   const popup = document.createElement("div");
   popup.style.position = "fixed";
   popup.style.top = "50%";
@@ -171,6 +172,24 @@ function selecionarPartida(el, voo) {
   const cancelar = document.createElement("button");
   cancelar.textContent = "Fechar";
   cancelar.onclick = () => document.body.removeChild(popup);
+  
+  const botaoTrocar = document.createElement("button");
+  botaoTrocar.textContent = "Trocar Posição";
+  botaoTrocar.style.marginTop = "10px";
+  botaoTrocar.onclick = () => {
+    alert("Clique em uma posição livre para mover a aeronave.");
+    document.addEventListener("click", function mover(e) {
+      if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
+        el.style.top = (e.target.offsetTop + e.target.parentElement.offsetTop) + "px";
+        el.style.left = (e.target.offsetLeft + e.target.parentElement.offsetLeft) + "px";
+        e.target.classList.remove("livre");
+        document.body.removeChild(popup);
+        document.removeEventListener("click", mover);
+      }
+    });
+  };
+  popup.appendChild(botaoTrocar);
+
   popup.appendChild(cancelar);
 
   document.body.appendChild(popup);
@@ -224,26 +243,6 @@ document.addEventListener("DOMContentLoaded", () => {
       aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
       aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
       aeronave.style.background = "blue";
-      const moverBtn = document.createElement("button");
-      moverBtn.textContent = "Mover Aeronave";
-      moverBtn.style.position = "absolute";
-      moverBtn.style.left = aeronave.style.left;
-      moverBtn.style.top = (parseInt(aeronave.style.top) + 25) + "px";
-      moverBtn.style.zIndex = 1000;
-      moverBtn.onclick = () => {
-        alert("Clique em uma nova posição livre para mover.");
-        document.addEventListener("click", function moverClick(e) {
-          if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
-            aeronave.style.top = (e.target.offsetTop + e.target.parentElement.offsetTop) + "px";
-            aeronave.style.left = (e.target.offsetLeft + e.target.parentElement.offsetLeft) + "px";
-            e.target.classList.remove("livre");
-            moverBtn.remove();
-            document.removeEventListener("click", moverClick);
-          }
-        });
-      };
-      aeroporto.appendChild(moverBtn);
-
       const info = JSON.parse(aeronave.dataset.info);
       info.estacionado = true;
       aeronave.dataset.info = JSON.stringify(info);
