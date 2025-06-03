@@ -94,7 +94,10 @@ function autorizarPouso(voo) {
       taxiToTerminal(el, voo);
     }
   }, 20);
-  el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
+  el.onclick = (evt) => {
+  evt.stopPropagation();
+  if (voo.estacionado) selecionarPartida(el, voo);
+};
 }
 
 function taxiToTerminal(el, voo) {
@@ -136,7 +139,7 @@ function selecionarPartida(el, voo) {
   function atualizarSelect() {
     select.innerHTML = "";
     const texto = filtro.value.toLowerCase();
-    partidas.filter(p => p.status === "Aguardando Associacao" && (
+    partidas.filter(p => p.status === "Aguardando Associacao" && p.companhia === voo.companhia && p.aeronave === voo.aeronave && (
       p.voo.toLowerCase().includes(texto) ||
       p.cidade.toLowerCase().includes(texto) ||
       p.aeronave.toLowerCase().includes(texto)
@@ -221,6 +224,29 @@ document.addEventListener("DOMContentLoaded", () => {
       aeronave.style.top = (pos.offsetTop + pos.parentElement.offsetTop) + "px";
       aeronave.style.left = (pos.offsetLeft + pos.parentElement.offsetLeft) + "px";
       aeronave.style.background = "blue";
+      const moverBtn = document.createElement("button");
+      moverBtn.textContent = "Mover Aeronave";
+      moverBtn.style.position = "absolute";
+      moverBtn.style.left = aeronave.style.left;
+      moverBtn.style.top = (parseInt(aeronave.style.top) + 25) + "px";
+      moverBtn.style.zIndex = 1000;
+      moverBtn.onclick = () => {
+        alert("Clique em uma nova posição livre para mover.");
+        document.addEventListener("click", function moverClick(e) {
+          if (e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
+            aeronave.style.top = (e.target.offsetTop + e.target.parentElement.offsetTop) + "px";
+            aeronave.style.left = (e.target.offsetLeft + e.target.parentElement.offsetLeft) + "px";
+            e.target.classList.remove("livre");
+            moverBtn.remove();
+            document.removeEventListener("click", moverClick);
+          }
+        });
+      };
+      aeroporto.appendChild(moverBtn);
+
+      const info = JSON.parse(aeronave.dataset.info);
+      info.estacionado = true;
+      aeronave.dataset.info = JSON.stringify(info);
       pos.classList.remove("livre");
     }
   });
