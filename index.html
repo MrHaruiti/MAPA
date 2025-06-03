@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Aeroporto - Taxiways Abaixo do Pátio Conectadas</title>
+  <title>Aeroporto - Taxiways Inferiores Conectadas ao Pátio</title>
   <style>
     body {
       margin: 0;
@@ -58,7 +58,7 @@
 
     .taxiway, .taxiway-continuacao, .taxiway-final,
     .taxiway-inferior, .taxiway-continuacao-inferior, .taxiway-final-inferior,
-    .taxiway-patio-inferior {
+    .taxiway-patio-inferior, .taxiway-patio-conexao {
       position: absolute;
       width: 20px;
       height: 80px;
@@ -73,7 +73,8 @@
     .taxiway-continuacao-inferior { top: 2200px; }
     .taxiway-final-inferior { top: 2100px; }
 
-    .taxiway-patio-inferior { top: 1730px; } /* parte de baixo do pátio (530 + 1200 = 1730) */
+    .taxiway-patio-inferior { top: 1730px; }
+    .taxiway-patio-conexao { top: 1810px; }
 
     .taxiway-paralela, .taxiway-paralela-inferior {
       position: absolute;
@@ -156,11 +157,17 @@
         finalInf.style.left = x + 'px';
         mapa.appendChild(finalInf);
 
-        // Taxiways saindo da parte inferior do pátio (conectadas corretamente)
+        // Taxiways saindo da parte inferior do pátio
         const patioInferior = document.createElement('div');
         patioInferior.className = 'taxiway-patio-inferior';
         patioInferior.style.left = x + 'px';
         mapa.appendChild(patioInferior);
+
+        // Conexão entre taxiway final e taxiway do pátio inferior
+        const conexao = document.createElement('div');
+        conexao.className = 'taxiway-patio-conexao';
+        conexao.style.left = x + 'px';
+        mapa.appendChild(conexao);
       }
     </script>
   </div>
