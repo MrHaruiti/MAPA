@@ -1,619 +1,159 @@
+
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Painel de Voos - Aeroporto Tipo Concourse</title>
+  <meta charset="UTF-8">
+  <title>Aeroporto com Duas Pistas e Distância Corrigida</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
       margin: 0;
-      margin-left: 360px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      background: #e8f0fe;
-      color: #222;
-      display: flex;
+      background: #2b2b2b;
+      overflow-x: scroll;
+      overflow-y: hidden;
     }
-    #painel {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 100;
-      width: 360px;
-      height: 100vh;
-      background: #111;
-      color: #fff;
-      padding: 15px;
-      overflow-y: auto;
-      box-shadow: inset -3px 0 10px rgba(0,0,0,0.7);
-    }
-    #painel h2 {
-      margin-top: 0;
-      border-bottom: 1px solid #444;
-      padding-bottom: 10px;
-      font-weight: 600;
-      font-size: 1.5em;
-    }
-    #aeroporto {
-      flex: 1;
+
+    #mapa {
       position: relative;
-      background: linear-gradient(180deg, #9cc5e8 0%, #4a7ab7 100%);
-      overflow: auto;
-      user-select: none;
-      font-size: 14px;
-      color: #222;
-      padding: 40px;
-      min-width: 1600px;
-      min-height: 1300px;
+      width: 3000px;
+      height: 3000px;
+      background: linear-gradient(to right, #444, #555);
     }
-    /* Pista */
-    .pista {
+
+    .pista, .pista-inferior {
       position: absolute;
-      background: #555;
-      border-radius: 14px;
-      box-shadow: inset 0 0 18px #333;
-      border: 2px solid #333;
-      z-index: 10;
-    }
-    /* Taxiway */
-    .taxiway {
-      position: absolute;
-      background: #888;
-      border-radius: 8px;
-      border: 1.5px solid #555;
-      box-shadow: inset 0 0 10px #666;
-      z-index: 9;
-    }
-    /* Terminais ilha (concourse) */
-    .concourse {
-      position: absolute;
-      width: 320px;
-      height: 280px;
-      background: rgba(255 255 255 / 0.95);
-      border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.2);
-      border: 1px solid #888;
-      padding: 12px 10px;
-      box-sizing: border-box;
-      font-size: 14px;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-      z-index: 20;
-    }
-    .concourse h3 {
-      border-bottom: 2px solid #777;
-      padding-bottom: 6px;
-      margin: 0 0 10px;
-      font-weight: 700;
-      text-align: center;
-      user-select: none;
-    }
-    /* Container para posições */
-    .posicoes-container {
-      position: relative;
-      width: 320px;
-      height: 280px;
-      pointer-events: none;
-      flex: 1;
-    }
-    /* Posições ao redor */
-    .posicao {
-      position: absolute;
-      width: 32px;
-      height: 28px;
-      border-radius: 6px;
-      border: 2px solid #999;
-      background: #ddd;
-      color: #555;
-      font-weight: 700;
-      line-height: 28px;
-      text-align: center;
-      user-select: none;
-      cursor: default;
-      box-sizing: border-box;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      pointer-events: auto;
-      padding: 0 5px;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-    }
-    .posicao.livre {
-      background: #cfc;
-      border-color: #484;
-      cursor: pointer;
-    }
-    .posicao.livre:hover {
-      background: #9f9;
-      border-color: #282;
-    }
-    /* Posições distribuídas em 4 lados: bottom, right, top, left */
-    .posicao-bottom {
-      bottom: 5px;
-    }
-    .posicao-top {
-      top: 5px;
-    }
-    .posicao-right {
-      right: 5px;
-      width: 28px;
-      height: 32px;
-      line-height: 32px;
-      padding: 0;
-    }
-    .posicao-left {
-      left: 5px;
-      width: 28px;
-      height: 32px;
-      line-height: 32px;
-      padding: 0;
-    }
-    /* Aeronave */
-    .aeronave {
-      position: absolute;
-      width: 34px;
-      height: 34px;
-      background: #1a73e8;
-      color: white;
-      font-weight: 700;
-      font-size: 15px;
-      line-height: 34px;
-      border-radius: 8px;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 0 11px #0a5;
-      user-select: none;
-      transition: background-color 0.3s ease;
-      z-index: 30;
-    }
-    .aeronave[title]:hover {
-      filter: brightness(1.3);
-    }
-    /* Botão autorizar */
-    .autorizar {
-      background: #0a0;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      cursor: pointer;
-      margin-top: 12px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 15px;
+      height: 100px;
       width: 100%;
-      box-sizing: border-box;
-      user-select: none;
-      transition: background-color 0.3s ease;
+      background: #333;
+      border: 2px solid #999;
     }
-    .autorizar:hover {
-      background: #070;
+
+    .pista {
+      top: 150px;
     }
-    /* Listas de partidas/chegadas */
-    .partida-lista, .aeronave-lista {
-      background: #222;
-      padding: 14px 18px;
-      margin-bottom: 14px;
-      border-radius: 12px;
-      border: 1px solid #444;
-      box-shadow: inset 0 0 12px #000;
-      font-size: 15px;
+
+    .pista-inferior {
+      top: 2400px;
+    }
+
+    .linha-central, .linha-central-inferior {
+      position: absolute;
+      height: 4px;
+      width: 100%;
+      background: repeating-linear-gradient(
+        to right,
+        white 0px,
+        white 30px,
+        transparent 30px,
+        transparent 60px
+      );
+    }
+
+    .linha-central {
+      top: 200px;
+    }
+
+    .linha-central-inferior {
+      top: 2450px;
+    }
+
+    .taxiway, .taxiway-continuacao, .taxiway-final,
+    .taxiway-inferior, .taxiway-continuacao-inferior, .taxiway-final-inferior {
+      position: absolute;
+      width: 20px;
+      height: 80px;
+      background: #888;
+    }
+
+    .taxiway { top: 250px; }
+    .taxiway-continuacao { top: 350px; }
+    .taxiway-final { top: 450px; }
+
+    .taxiway-inferior { top: 2300px; }
+    .taxiway-continuacao-inferior { top: 2200px; }
+    .taxiway-final-inferior { top: 2100px; }
+
+    .taxiway-paralela, .taxiway-paralela-inferior {
+      position: absolute;
+      height: 20px;
+      width: 100%;
+      background: #555;
+    }
+
+    .paralela-superior { top: 330px; }
+    .paralela-inferior { top: 430px; }
+
+    .paralela-inferior-1 { top: 2180px; }
+    .paralela-inferior-2 { top: 2080px; }
+
+    .patio {
+      position: absolute;
+      top: 570px;
+      left: 0;
+      width: 100%;
+      height: 1200px;
+      background: #1e1e1e;
+      border-top: 3px solid #777;
     }
   </style>
 </head>
 <body>
-  <div id="painel">
-    <h2>Chegadas Programadas</h2>
-    <div id="chegadas"></div>
-    <h2>Partidas Disponíveis</h2>
-    <div id="partidas"></div>
+  <div id="mapa">
+    <!-- Pista superior -->
+    <div class="pista"></div>
+    <div class="linha-central"></div>
+    <div class="taxiway-paralela paralela-superior"></div>
+    <div class="taxiway-paralela paralela-inferior"></div>
+
+    <!-- Pátio -->
+    <div class="patio"></div>
+
+    <!-- Pista inferior -->
+    <div class="pista-inferior"></div>
+    <div class="linha-central-inferior"></div>
+    <div class="taxiway-paralela-inferior paralela-inferior-1"></div>
+    <div class="taxiway-paralela-inferior paralela-inferior-2"></div>
+
+    <script>
+      const mapa = document.getElementById('mapa');
+      const totalTaxiways = 10;
+      const spacing = 3000 / (totalTaxiways - 1);
+
+      for (let i = 0; i < totalTaxiways; i++) {
+        const x = i * spacing - 10;
+
+        // Taxiways superiores
+        const taxiway = document.createElement('div');
+        taxiway.className = 'taxiway';
+        taxiway.style.left = x + 'px';
+        mapa.appendChild(taxiway);
+
+        const continuacao = document.createElement('div');
+        continuacao.className = 'taxiway-continuacao';
+        continuacao.style.left = x + 'px';
+        mapa.appendChild(continuacao);
+
+        const final = document.createElement('div');
+        final.className = 'taxiway-final';
+        final.style.left = x + 'px';
+        mapa.appendChild(final);
+
+        // Taxiways inferiores (agora com distância proporcional ao pátio)
+        const taxiwayInf = document.createElement('div');
+        taxiwayInf.className = 'taxiway-inferior';
+        taxiwayInf.style.left = x + 'px';
+        mapa.appendChild(taxiwayInf);
+
+        const contInf = document.createElement('div');
+        contInf.className = 'taxiway-continuacao-inferior';
+        contInf.style.left = x + 'px';
+        mapa.appendChild(contInf);
+
+        const finalInf = document.createElement('div');
+        finalInf.className = 'taxiway-final-inferior';
+        finalInf.style.left = x + 'px';
+        mapa.appendChild(finalInf);
+      }
+    </script>
   </div>
-  <div id="aeroporto" tabindex="0">
-    <!-- Pistas -->
-    <div id="pista1-pouso" class="pista" style="top: 40px; left: 100px; width: 1200px; height: 40px;" title="Pista 1 - Pouso"></div>
-    <div id="pista1-decolagem" class="pista" style="top: 480px; left: 100px; width: 1200px; height: 40px;" title="Pista 1 - Decolagem"></div>
-    <div id="pista2-pouso" class="pista" style="top: 650px; left: 100px; width: 1200px; height: 40px;" title="Pista 2 - Pouso"></div>
-    <div id="pista2-decolagem" class="pista" style="top: 1090px; left: 100px; width: 1200px; height: 40px;" title="Pista 2 - Decolagem"></div>
-
-    <!-- Taxiways conectados visualmente -->
-    <div id="taxiway1" class="taxiway" style="top: 90px; left: 100px; width: 1200px; height: 32px;" title="Taxiway A"></div>
-    <div id="taxiway1-vert1" class="taxiway" style="top: 90px; left: 300px; width: 32px; height: 100px;"></div>
-    <div id="taxiway1-vert2" class="taxiway" style="top: 90px; left: 620px; width: 32px; height: 100px;"></div>
-    <div id="taxiway1-vert3" class="taxiway" style="top: 90px; left: 940px; width: 32px; height: 100px;"></div>
-    <div id="taxiway1-vert4" class="taxiway" style="top: 90px; left: 1260px; width: 32px; height: 100px;"></div>
-
-    <div id="taxiway2" class="taxiway" style="top: 720px; left: 100px; width: 1200px; height: 32px;" title="Taxiway B"></div>
-    <div id="taxiway2-vert1" class="taxiway" style="top: 652px; left: 300px; width: 32px; height: 100px;"></div>
-    <div id="taxiway2-vert2" class="taxiway" style="top: 652px; left: 620px; width: 32px; height: 100px;"></div>
-    <div id="taxiway2-vert3" class="taxiway" style="top: 652px; left: 940px; width: 32px; height: 100px;"></div>
-    <div id="taxiway2-vert4" class="taxiway" style="top: 652px; left: 1260px; width: 32px; height: 100px;"></div>
-
-    <!-- Terminais/concourse tipo ilha -->
-    <div id="conc1" class="concourse" style="top: 150px; left: 270px;">
-      <h3>Concourse 1</h3>
-    </div>
-    <div id="conc2" class="concourse" style="top: 150px; left: 590px;">
-      <h3>Concourse 2</h3>
-    </div>
-    <div id="conc3" class="concourse" style="top: 150px; left: 910px;">
-      <h3>Concourse 3</h3>
-    </div>
-    <div id="conc4" class="concourse" style="top: 150px; left: 1230px;">
-      <h3>Concourse 4</h3>
-    </div>
-    <div id="conc5" class="concourse" style="top: 700px; left: 590px;">
-      <h3>Concourse 5</h3>
-    </div>
-
-    <div id="tooltip" class="tooltip"></div>
-  </div>
-
-  <script>
-    const aeroporto = document.getElementById("aeroporto");
-    const chegadasDiv = document.getElementById("chegadas");
-    const partidasDiv = document.getElementById("partidas");
-    let chegadas = [], partidas = [];
-
-    // Cria as posições ao redor das concourses
-    function criarPosicoes(concourseId) {
-      const container = document.getElementById(concourseId);
-      container.innerHTML = '<h3>' + container.querySelector('h3').innerText + '</h3>';
-
-      const posicoesContainer = document.createElement("div");
-      posicoesContainer.className = "posicoes-container";
-      container.appendChild(posicoesContainer);
-
-      const width = 320;
-      const height = 280;
-      const gapHorizontal = (width - 32) / 8; // para 9 posições
-      const gapVertical = (height - 28) / 8; // para 9 posições vertical
-
-      // bottom
-      for(let i=0; i<9; i++){
-        const pos = document.createElement("div");
-        pos.className = "posicao livre posicao-bottom";
-        pos.style.left = (5 + gapHorizontal * i) + "px";
-        pos.textContent = i+1;
-        pos.dataset.codigo = concourseId + "-B" + (i+1);
-        pos.dataset.conc = concourseId;
-        posicoesContainer.appendChild(pos);
-      }
-      // right
-      for(let i=0; i<9; i++){
-        const pos = document.createElement("div");
-        pos.className = "posicao livre posicao-right";
-        pos.style.top = (5 + gapVertical * i) + "px";
-        pos.textContent = i+10;
-        pos.dataset.codigo = concourseId + "-R" + (i+10);
-        pos.dataset.conc = concourseId;
-        posicoesContainer.appendChild(pos);
-      }
-      // top
-      for(let i=0; i<9; i++){
-        const pos = document.createElement("div");
-        pos.className = "posicao livre posicao-top";
-        pos.style.left = (5 + gapHorizontal * i) + "px";
-        pos.textContent = i+19;
-        pos.dataset.codigo = concourseId + "-T" + (i+19);
-        pos.dataset.conc = concourseId;
-        posicoesContainer.appendChild(pos);
-      }
-      // left
-      for(let i=0; i<9; i++){
-        const pos = document.createElement("div");
-        pos.className = "posicao livre posicao-left";
-        pos.style.top = (5 + gapVertical * i) + "px";
-        pos.textContent = i+28;
-        pos.dataset.codigo = concourseId + "-L" + (i+28);
-        pos.dataset.conc = concourseId;
-        posicoesContainer.appendChild(pos);
-      }
-    }
-
-    // Criar posicoes para todas concourses
-    ["conc1","conc2","conc3","conc4","conc5"].forEach(c=>criarPosicoes(c));
-
-    // Exemplo simples para movimentar aeronave seguindo pontos (pistas>Aeroporto>Concourses)
-    const pontos = {
-      pista1_fim: {x: 1280, y: 60},
-      taxiway_entrada: {x: 310, y: 90},
-      conc1_entrada: {x: 400, y: 200},
-      conc2_entrada: {x: 720, y: 200},
-      conc3_entrada: {x: 1040, y: 200},
-      conc4_entrada: {x: 1360, y: 200},
-      conc5_entrada: {x: 720, y: 720}
-    };
-
-    function moverSuave(el, destinoX, destinoY, callback){
-      clearInterval(el._intervalMover);
-      el._intervalMover = setInterval(() => {
-        const xAtual = parseFloat(el.style.left) || 0;
-        const yAtual = parseFloat(el.style.top) || 0;
-        const dx = destinoX - xAtual;
-        const dy = destinoY - yAtual;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const passo = 8;
-        if(dist <= passo){
-          el.style.left = destinoX + "px";
-          el.style.top = destinoY + "px";
-          clearInterval(el._intervalMover);
-          if(callback) callback();
-        } else {
-          el.style.left = (xAtual + passo * dx / dist) + "px";
-          el.style.top = (yAtual + passo * dy / dist) + "px";
-        }
-      }, 25);
-    }
-
-    function seguirRota(el, rota, callback){
-      if(rota.length === 0){
-        if(callback) callback();
-        return;
-      }
-      const ponto = pontos[rota[0]];
-      if(!ponto){
-        seguirRota(el, rota.slice(1), callback);
-        return;
-      }
-      moverSuave(el, ponto.x, ponto.y, ()=>{
-        seguirRota(el, rota.slice(1), callback);
-      });
-    }
-
-    // Pousar aeronave seguindo rota pista1 > taxiway > concourse entrada
-    function autorizarPouso(voo){
-      voo.status = "Pousando";
-      renderizarChegadas();
-
-      const el = document.createElement("div");
-      el.className = "aeronave";
-      el.innerText = voo.voo;
-      el.title = `${voo.companhia} ${voo.voo} - ${voo.cidade}`;
-      el.style.top = "60px";
-      el.style.left = "120px";
-      el.dataset.info = JSON.stringify(voo);
-      aeroporto.appendChild(el);
-
-      // Rota simples para concourse 1-5, default conc1
-      const concourse = voo.concourse || "conc1";
-      const rotaConcourses = {
-        conc1:["pista1_fim", "taxiway_entrada", "conc1_entrada"],
-        conc2:["pista1_fim", "taxiway_entrada", "conc2_entrada"],
-        conc3:["pista1_fim", "taxiway_entrada", "conc3_entrada"],
-        conc4:["pista1_fim", "taxiway_entrada", "conc4_entrada"],
-        conc5:["pista2_fim", "taxiway_entrada", "conc5_entrada"]
-      };
-      const rota = rotaConcourses[concourse] || rotaConcourses["conc1"];
-
-      seguirRota(el, rota, () => {
-        voo.status = "Aguardando Alocacao";
-        el.style.background = "orange";
-        el.dataset.info = JSON.stringify(voo);
-        escolherPosicaoTerminal(el, voo);
-      });
-
-      el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
-    }
-
-    // Renderiza chegadas com botão para autorizar pouso
-    function renderizarChegadas(){
-      chegadasDiv.innerHTML = "";
-      chegadas.filter(v => v.status === "Aguardando Autorizacao").forEach(voo=>{
-        const div = document.createElement("div");
-        div.className = "aeronave-lista";
-        div.innerHTML = `<strong>${voo.companhia} ${voo.voo}</strong><br>De: ${voo.cidade}<br>A/C: ${voo.aeronave}<br>Horário: ${voo.horario}<br>Status: ${voo.status}<br><button class="autorizar">Autorizar Pouso</button>`;
-        div.querySelector("button").onclick = ()=> autorizarPouso(voo);
-        chegadasDiv.appendChild(div);
-      });
-    }
-    // Renderiza partidas (simples)
-    function renderizarPartidas(){
-      partidasDiv.innerHTML = "";
-      partidas.filter(v=>v.status === "Aguardando Associacao").forEach(voo=>{
-        const div = document.createElement("div");
-        div.className = "partida-lista";
-        div.innerHTML = `<strong>${voo.companhia} ${voo.voo}</strong><br>Para: ${voo.cidade}<br>A/C: ${voo.aeronave}<br>Horário: ${voo.horario}<br>Status: ${voo.status}`;
-        partidasDiv.appendChild(div);
-      });
-    }
-
-    // Popup para escolher posição livre
-    function escolherPosicaoTerminal(el, voo){
-      const popup = document.createElement("div");
-      popup.style.position = "fixed";
-      popup.style.background = "#222";
-      popup.style.color = "#fff";
-      popup.style.padding = "22px";
-      popup.style.border = "2px solid #555";
-      popup.style.zIndex = 1001;
-      popup.style.maxWidth = "360px";
-      popup.style.borderRadius = "12px";
-      popup.style.top = "50%";
-      popup.style.left = "50%";
-      popup.style.transform = "translate(-50%, -50%)";
-      popup.innerHTML = "<strong>Escolher posição livre para estacionar</strong><br><br>";
-
-      const select = document.createElement("select");
-      select.style.width = "100%";
-      select.style.fontSize = "15px";
-
-      const posicoesLivres = Array.from(document.querySelectorAll(".posicao.livre")).filter(p=>p.dataset.conc === (voo.concourse || "conc1"));
-      if(posicoesLivres.length === 0){
-        const option = document.createElement("option");
-        option.disabled = true;
-        option.textContent = "Nenhuma posição livre disponível";
-        select.appendChild(option);
-      }else{
-        posicoesLivres.forEach(p=>{
-          const option = document.createElement("option");
-          option.value = p.dataset.codigo;
-          option.textContent = p.dataset.codigo;
-          select.appendChild(option);
-        });
-      }
-      popup.appendChild(select);
-
-      const btnConf = document.createElement("button");
-      btnConf.textContent = "Confirmar";
-      btnConf.className = "autorizar";
-      btnConf.onclick=()=>{
-        const codigo = select.value;
-        const pos = document.querySelector(`.posicao.livre[data-codigo="${codigo}"]`);
-        if(!pos) return;
-        document.body.removeChild(popup);
-        pos.classList.remove("livre");
-
-        // Animar para posição
-        const rect = pos.getBoundingClientRect();
-        const paRect = aeroporto.getBoundingClientRect();
-
-        const destinoTop = rect.top - paRect.top + aeroporto.scrollTop;
-        const destinoLeft = rect.left - paRect.left + aeroporto.scrollLeft;
-        moverSuave(el,destinoLeft,destinoTop,()=>{
-          el.style.background = "#1a73e8";
-          voo.status = "Estacionado";
-          el.dataset.info = JSON.stringify(voo);
-          el.onclick = evt=>{
-            evt.stopPropagation();
-            selecionarPartida(el, voo);
-          };
-          adicionarBotaoTrocarPosicao(el);
-        });
-      };
-      popup.appendChild(btnConf);
-
-      const btnCan = document.createElement("button");
-      btnCan.textContent = "Cancelar";
-      btnCan.className = "autorizar";
-      btnCan.style.background = "#b22";
-      btnCan.style.marginTop = "10px";
-      btnCan.onclick=()=>document.body.removeChild(popup);
-      popup.appendChild(btnCan);
-
-      document.body.appendChild(popup);
-    }
-
-    // Botão para trocar posição da aeronave estacionada
-    function adicionarBotaoTrocarPosicao(el){
-      const btnExist = aeroporto.querySelector(`.btn-trocar-posicao[data-id='${el.dataset.info}']`);
-      if(btnExist) btnExist.remove();
-
-      const btn = document.createElement("button");
-      btn.className = "btn-trocar-posicao";
-      btn.textContent = "Trocar Posição";
-      btn.style.left = el.style.left;
-      btn.style.top = (parseInt(el.style.top) + 38) + "px";
-      btn.dataset.id = el.dataset.info;
-      btn.style.zIndex = 31;
-      btn.onclick = () => {
-        alert("Clique em uma nova posição livre para mover a aeronave.");
-        function handler(e){
-          if(e.target.classList.contains("posicao") && e.target.classList.contains("livre")){
-            const topo = e.target.offsetTop + e.target.parentElement.offsetTop + aeroporto.scrollTop;
-            const left = e.target.offsetLeft + e.target.parentElement.offsetLeft + aeroporto.scrollLeft;
-            el.style.top = topo + "px";
-            el.style.left = left + "px";
-            e.target.classList.remove("livre");
-            btn.style.left = left + "px";
-            btn.style.top = (topo + 38) + "px";
-            document.removeEventListener("click", handler);
-          }
-        }
-        document.addEventListener("click", handler);
-      };
-      aeroporto.appendChild(btn);
-    }
-
-    // Seleciona partida associada à aeronave
-    function selecionarPartida(el, voo){
-      const popup = document.createElement("div");
-      popup.style.position = "fixed";
-      popup.style.top = "50%";
-      popup.style.left = "50%";
-      popup.style.transform = "translate(-50%, -50%)";
-      popup.style.background = "#222";
-      popup.style.color = "#fff";
-      popup.style.padding = "20px";
-      popup.style.border = "2px solid #555";
-      popup.style.zIndex = 1001;
-      popup.style.maxWidth = "400px";
-      popup.style.borderRadius = "12px";
-      popup.innerHTML = `<strong>Selecionar Partida para ${voo.voo}</strong><br><br>`;
-
-      const filtro = document.createElement("input");
-      filtro.placeholder = "Filtrar por destino, voo...";
-      filtro.style.width = "100%";
-      filtro.style.marginBottom = "15px";
-      filtro.style.fontSize = "14px";
-      popup.appendChild(filtro);
-
-      const select = document.createElement("select");
-      select.style.width = "100%";
-      select.style.fontSize = "14px";
-      popup.appendChild(select);
-
-      function atualizar(){
-        select.innerHTML = "";
-        const txt = filtro.value.toLowerCase();
-        partidas.filter(p=>p.status==="Aguardando Associacao"&&(
-          p.voo.toLowerCase().includes(txt)||p.cidade.toLowerCase().includes(txt)||p.aeronave.toLowerCase().includes(txt)
-        )).forEach(p=>{
-          const opt = document.createElement("option");
-          opt.value = p.id;
-          opt.textContent = `${p.voo} - ${p.cidade} - ${p.horario}`;
-          select.appendChild(opt);
-        });
-      }
-      filtro.oninput = atualizar;
-      atualizar();
-
-      const btnOk = document.createElement("button");
-      btnOk.textContent = "Confirmar";
-      btnOk.className = "autorizar";
-      btnOk.style.marginTop = "15px";
-      btnOk.onclick = ()=>{
-        const sel = partidas.find(p=>p.id === select.value);
-        if(sel){
-          sel.status = "Programado";
-          el.title = `Partida para ${sel.cidade} ${sel.horario}`;
-          renderizarPartidas();
-        }
-        document.body.removeChild(popup);
-      };
-      popup.appendChild(btnOk);
-
-      const btnClose = document.createElement("button");
-      btnClose.textContent = "Fechar";
-      btnClose.className = "autorizar";
-      btnClose.style.background = "#b22";
-      btnClose.style.marginTop = "10px";
-      btnClose.onclick = ()=>document.body.removeChild(popup);
-      popup.appendChild(btnClose);
-
-      document.body.appendChild(popup);
-    }
-
-    /* Carregamento inicial */
-    document.addEventListener("DOMContentLoaded", ()=>{
-      renderizarChegadas();
-      renderizarPartidas();
-
-      // Dados fictícios exemplo
-      chegadas = [
-        { companhia: 'Azul', voo: 'AZU1234', cidade: 'São Paulo', aeronave: 'E190', horario: '14:30', status: 'Aguardando Autorizacao', concourse:'conc1' },
-        { companhia: 'Latam', voo: 'LAT4321', cidade: 'Rio de Janeiro', aeronave: 'A320', horario: '15:00', status: 'Aguardando Autorizacao', concourse:'conc2' },
-      ];
-      partidas = [
-        { companhia: 'Azul', voo: 'AZU5678', cidade: 'Belo Horizonte', aeronave: 'E195', horario: '16:00', status: 'Aguardando Associacao' },
-        { companhia: 'Latam', voo: 'LAT8765', cidade: 'Curitiba', aeronave: 'A321', horario: '17:30', status: 'Aguardando Associacao' },
-      ];
-      renderizarChegadas();
-      renderizarPartidas();
-    });
-  </script>
 </body>
 </html>
-
