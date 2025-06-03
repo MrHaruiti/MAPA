@@ -98,7 +98,6 @@ function autorizarPouso(voo) {
 }
 
 
-
 function taxiToTerminal(el, voo) {
   let top = 50;
   const animarTaxi = setInterval(() => {
@@ -110,7 +109,6 @@ function taxiToTerminal(el, voo) {
       el.style.background = "orange";
       el.dataset.info = JSON.stringify(voo);
 
-      // Criar popup com filtro de posições livres
       const popup = document.createElement("div");
       popup.style.position = "fixed";
       popup.style.top = "50%";
@@ -207,16 +205,6 @@ function taxiToTerminal(el, voo) {
     }
   }, 20);
 }
-            });
-          };
-          aeroporto.appendChild(moverBtn);
-
-          document.removeEventListener("click", alocarPosicao);
-        }
-      });
-    }
-  }, 20);
-}
   }, 20);
 }
 
@@ -246,7 +234,7 @@ function selecionarPartida(el, voo) {
   function atualizarSelect() {
     select.innerHTML = "";
     const texto = filtro.value.toLowerCase();
-    partidas.filter(p => p.status === "Aguardando Associacao" && p.companhia === voo.companhia && p.aeronave === voo.aeronave && (
+    partidas.filter(p => p.status === "Aguardando Associacao" && (
       p.voo.toLowerCase().includes(texto) ||
       p.cidade.toLowerCase().includes(texto) ||
       p.aeronave.toLowerCase().includes(texto)
