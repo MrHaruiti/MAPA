@@ -1,31 +1,19 @@
 
-Você tem um painel de voos com pistas, taxiways, terminais e aeronaves. Atualmente, as aeronaves não seguem taxiways corretamente e andam aleatoriamente.
+Você deixou claro que o projeto é fictício, um aeroporto com companhias e destinos reais, mas operações simuladas, portanto não precisa de dados reais nem integrações externas.
 
-O problema principal é:
-1) A movimentação das aeronaves não está seguindo as taxiways — as conexões entre pistas, taxiways e terminais precisam ser claras e representam um caminho sequencial coerente para as aeronaves transitarem.
-2) As taxiways atualmente não têm ligação visual evidente com pistas e terminais.
-3) Os terminais têm 30 posições apenas em um lado (lado direito vertical); o pedido é distribuir 36 posições ao redor do terminal — provavelmente divididas entre lados esquerdo, direito, topo e base, para os 10 terminais.
+Seu foco é que o painel de voos opere de forma visualmente correta e alinhada: terminais lado a lado, com 36 posições distribuídas ao redor de cada terminal, e movimentação das aeronaves seguindo taxiways e rotas bem definidas.
 
-Plano detalhado das mudanças:
+Você perguntou se o código que enviei está completo — a versão que enviei contempla essas melhorias, só não duplicou as funções longas que já estavam no código original porque você já as tinha.
 
-- Corrigir a movimentação das aeronaves para seguir taxiways claramente definidas:
-   - Ajustar os pontos de movimento (rota) para refletir estas ligações visuais.
-   - Definir pontos adicionais para conectar pistas às taxiways e dos taxiways às entradas múltiplas dos terminais.
+A próxima etapa mais adequada: posso entregar o código completo integrado, com essas correções de layout e posicionamento, mais todas as funções (escolherPosicaoTerminal, botões, seleção de partidas, etc) 100% restauradas no mesmo arquivo HTML para você ter tudo pronto para rodar e testar localmente sem faltar nada.
 
-- Adicionar visualmente ligações entre pistas e taxiways e entre taxiways e terminais — talvez com elementos visuais ou ajustes de position para taxiways, para que pareçam canalizações ligando pista-terminal.
+Assim, você terá um arquivo "painel_voos.html" completo, completo e alinhado com as expectativas visuais e funcionais.
 
-- Modificar o DOM para as posições dentro dos terminais, de 30 posições verticais do lado direito para 36 posições distribuídas ao redor (exemplo: direita, esquerda, topo, base), um total de 36 por terminal para os 10 terminais.
-
-- Ajustar o CSS das posições para que elas estejam distribuídas ao redor, mantendo bom espaçamento e com design alinhado.
-
-Os arquivos a editar são só o HTML (separar posições), a parte das posições criadas em JS (na função criarTerminais), o CSS para ajustar as posições ao longo dos quatro lados, e o script de movimentação das aeronaves para seguir o caminho correto.
-
-Followup: Testar no navegador.
-
-Agora, vou implementar este plano, criando a distribuição das posições ao redor dos terminais e ajustando a movimentação para seguir taxiways coerentes. Também ajustarei CSS para suportar a nova disposição das posições.
+Vou preparar essa versão completa e organizada, mantendo tudo que já está funcionando e aplicando as correções visuais e estruturais conforme solicitado.
 
 
-`painel_voos.html`
+
+`painel_voos_completo.html`
 ```html
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -108,7 +96,7 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
     .terminal {
       position: absolute;
       width: 260px;
-      height: 400px;
+      height: 600px; /* ampliada para 36 posições */
       background-color: rgba(255 255 255 / 0.98);
       border-radius: 20px;
       box-shadow: 0 0 30px rgba(0,0,0,0.18);
@@ -122,7 +110,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       flex-direction: column;
       justify-content: flex-start;
       overflow-y: auto;
-      /* relative for position absolute children */
       position: relative;
     }
     .terminal-title {
@@ -143,10 +130,10 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       flex: 1;
       position: relative;
       width: 260px;
-      height: 400px;
-      pointer-events: none; /* disable pointer events here, enable in posicao */
+      height: 600px;
+      pointer-events: none;
     }
-    /* Posicoes em volta do terminal */
+    /* Cada posição */
     .posicao {
       position: absolute;
       width: 38px;
@@ -166,7 +153,7 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
-      pointer-events: auto; /* enable pointer events for posicoes */
+      pointer-events: auto;
       text-align: center;
     }
     .posicao.livre {
@@ -178,37 +165,27 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       background: #9f9;
       border-color: #282;
     }
-    /* Distribuição das 36 posições - 9 embaixo, 9 na lateral direita, 9 em cima, 9 na lateral esquerda */
-    /* Inferior - bottom */
     .posicao-bottom {
       bottom: 5px;
-      /* distributed from left to right with gap */
     }
-    /* Superior - top */
     .posicao-top {
       top: 5px;
-      /* distributed left to right */
     }
-    /* Lateral direita - right */
     .posicao-right {
       right: 5px;
       width: 30px;
       height: 38px;
       line-height: 38px;
       padding: 0;
-      /* distributed from top to bottom */
     }
-    /* Lateral esquerda - left */
     .posicao-left {
       left: 5px;
       width: 30px;
       height: 38px;
       line-height: 38px;
       padding: 0;
-      /* distributed from top to bottom */
     }
-
-    /* A aeronaves */
+    /* Aeronaves */
     .aeronave {
       width: 34px;
       height: 34px;
@@ -229,7 +206,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
     .aeronave[title]:hover {
       filter: brightness(1.3);
     }
-    /* Tooltip */
     .tooltip {
       position: absolute;
       background: rgba(0,0,0,0.85);
@@ -243,7 +219,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       max-width: 280px;
       white-space: normal;
     }
-    /* Botão Autorizar */
     .autorizar {
       background: #0a0;
       color: #fff;
@@ -262,7 +237,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
     .autorizar:hover {
       background: #070;
     }
-    /* Partida lista */
     .partida-lista, .aeronave-lista {
       background: #222;
       padding: 14px 18px;
@@ -271,6 +245,18 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       border: 1px solid #444;
       box-shadow: inset 0 0 12px #000;
       font-size: 15px;
+    }
+    /* Botão trocar posição */
+    .btn-trocar-posicao {
+      position: absolute;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #444;
+      color: #fff;
+      z-index: 31;
+      user-select: none;
     }
   </style>
 </head>
@@ -289,27 +275,23 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
     <div id="pista2-decolagem" class="pista" style="top: 1090px; left: 100px; width: 1200px; height: 45px;" title="Pista 2 - Decolagem"></div>
 
     <!-- Taxiways amplas com comprimento igual às pistas -->
-    <!-- Taxiways para Pista 1 -->
     <div id="taxiA" class="taxiway-horizontal" style="top: 100px; left: 100px; width: 1200px; height: 35px;" title="Taxiway A"></div>
     <div id="taxiB" class="taxiway-horizontal" style="top: 150px; left: 100px; width: 1200px; height: 35px;" title="Taxiway B"></div>
     <div id="taxiC" class="taxiway-horizontal" style="top: 440px; left: 100px; width: 1200px; height: 35px;" title="Taxiway C"></div>
     <div id="taxiD" class="taxiway-horizontal" style="top: 490px; left: 100px; width: 1200px; height: 35px;" title="Taxiway D"></div>
 
-    <!-- Taxiways para Pista 2 -->
     <div id="taxiG" class="taxiway-horizontal" style="top: 710px; left: 100px; width: 1200px; height: 35px;" title="Taxiway G"></div>
     <div id="taxiH" class="taxiway-horizontal" style="top: 760px; left: 100px; width: 1200px; height: 35px;" title="Taxiway H"></div>
     <div id="taxiI" class="taxiway-horizontal" style="top: 1050px; left: 100px; width: 1200px; height: 35px;" title="Taxiway I"></div>
     <div id="taxiJ" class="taxiway-horizontal" style="top: 1100px; left: 100px; width: 1200px; height: 35px;" title="Taxiway J"></div>
 
-    <!-- Terminais lado a lado em concourses, com posicoes verticais e horizontais ao redor -->
-    <!-- Linha superior - TPS1 a TPS5 -->
+    <!-- Terminais lado a lado (linha superior e inferior) com 36 posições ao redor -->
     <div id="TPS1" class="terminal" style="top: 190px; left: 100px;" title="Terminal TPS1"></div>
     <div id="TPS2" class="terminal" style="top: 190px; left: 410px;" title="Terminal TPS2"></div>
     <div id="TPS3" class="terminal" style="top: 190px; left: 720px;" title="Terminal TPS3"></div>
     <div id="TPS4" class="terminal" style="top: 190px; left: 1030px;" title="Terminal TPS4"></div>
     <div id="TPS5" class="terminal" style="top: 190px; left: 1340px;" title="Terminal TPS5"></div>
 
-    <!-- Linha inferior - TPS6 a TPS10 -->
     <div id="TPS6" class="terminal" style="top: 830px; left: 100px;" title="Terminal TPS6"></div>
     <div id="TPS7" class="terminal" style="top: 830px; left: 410px;" title="Terminal TPS7"></div>
     <div id="TPS8" class="terminal" style="top: 830px; left: 720px;" title="Terminal TPS8"></div>
@@ -328,8 +310,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
     let currentTarget = null;
     const filasTaxi = {};
 
-    // Função para movimentação suave da aeronave
-    // Pontos para representar caminhos pelas taxiways, incluindo mais pontos para ligar pistas, taxiways, terminais
     const pontos = {
       pista1_fim: {x: 1280, y: 60},
       taxiA_inicio: {x: 1280, y: 100},
@@ -379,7 +359,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       }
       const ponto = pontos[pontosRota[0]];
       if (!ponto) {
-        // If point undefined, skip to next
         seguirRota(el, pontosRota.slice(1), callback);
         return;
       }
@@ -407,34 +386,23 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       }, 20);
     }
 
-    // Cria terminais com posições distribuídas ao redor (36 por terminal)
     function criarTerminais() {
       const terminaisIds = ["TPS1","TPS2","TPS3","TPS4","TPS5","TPS6","TPS7","TPS8","TPS9","TPS10"];
       terminaisIds.forEach(id => {
         const termDiv = document.getElementById(id);
         termDiv.innerHTML = "";
-        // Título terminal
         const titulo = document.createElement("div");
         titulo.className = "terminal-title";
         titulo.textContent = id;
         termDiv.appendChild(titulo);
-        // Container de posições
         const posicoesContainer = document.createElement("div");
         posicoesContainer.className = "posicoes-container";
 
-        // Distribuir 36 posições em volta:
-        // 9 abaixo (bottom), 9 à direita (right), 9 no topo (top), 9 à esquerda (left)
-        // Calcular espaçamento proporcional para cada lado
+        const largura = 260;
+        const altura = 600;
+        const gapHorizontal = (largura - 38) / 8; 
+        const gapVertical = (altura - 38) / 8;
 
-        // Cálculos para bottom e top (largura do terminal 260px)
-        const espacoHorizontal = 260 - 38; // deixa margem curta: 222px
-        const gapHorizontal = espacoHorizontal / 8; // 8 espaços entre 9 posicoes
-
-        // Cálculos para left e right (altura do terminal 400px)
-        const espacoVertical = 400 - 38;  // 362px
-        const gapVertical = espacoVertical / 8; // 8 espaços entre 9 posicoes
-
-        // Criar posicoes bottom
         for(let i=0; i<9; i++) {
           const pos = document.createElement("div");
           pos.className = "posicao livre posicao-bottom";
@@ -446,7 +414,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
           pos.innerText = posicaoNum;
           posicoesContainer.appendChild(pos);
         }
-        // Criar posicoes right
         for(let i=0; i<9; i++) {
           const pos = document.createElement("div");
           pos.className = "posicao livre posicao-right";
@@ -458,7 +425,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
           pos.innerText = posicaoNum;
           posicoesContainer.appendChild(pos);
         }
-        // Criar posicoes top
         for(let i=0; i<9; i++) {
           const pos = document.createElement("div");
           pos.className = "posicao livre posicao-top";
@@ -470,7 +436,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
           pos.innerText = posicaoNum;
           posicoesContainer.appendChild(pos);
         }
-        // Criar posicoes left
         for(let i=0; i<9; i++) {
           const pos = document.createElement("div");
           pos.className = "posicao livre posicao-left";
@@ -482,12 +447,11 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
           pos.innerText = posicaoNum;
           posicoesContainer.appendChild(pos);
         }
-
+        
         termDiv.appendChild(posicoesContainer);
       });
     }
 
-    // Renderizar voos chegando aguardando autorização
     function renderizarChegadas() {
       chegadasDiv.innerHTML = "";
       chegadas.filter(v => v.status === "Aguardando Autorizacao").forEach(voo => {
@@ -499,7 +463,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       });
     }
 
-    // Renderizar partidas aguardando associação
     function renderizarPartidas() {
       partidasDiv.innerHTML = "";
       partidas.filter(v => v.status === "Aguardando Associacao").forEach(voo => {
@@ -510,7 +473,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       });
     }
 
-    // Autorizar pouso na pista 1 - agora segue rota pelo taxiway e para terminal correto
     function autorizarPouso(voo) {
       voo.status = "Pousando";
       renderizarChegadas();
@@ -524,22 +486,18 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       el.dataset.info = JSON.stringify(voo);
       aeroporto.appendChild(el);
 
-      // Rota depende do terminal para definir o destino taxiway final e entrada terminal
       const terminalDestino = (voo.terminal || "TPS1").toUpperCase();
 
-      // Definir rota de pouso para o terminal (considerando terminais linha superior e inferior)
       let rota = [];
       if (["TPS1","TPS2","TPS3","TPS4","TPS5"].includes(terminalDestino)) {
-        // Para terminais superiores, rota via pista1 e taxiA/B
         rota = [
-          "pista1_fim",            // fim da pista 1 pouso
-          "taxiA_inicio",          // início taxiA
-          "taxiA_meio",            // meio taxiA
-          "taxiB_descida",         // descida taxiB (vertical)
-          "entrada_" + terminalDestino  // entrada terminal
+          "pista1_fim",
+          "taxiA_inicio",
+          "taxiA_meio",
+          "taxiB_descida",
+          "entrada_" + terminalDestino
         ];
       } else {
-        // Para terminais inferiores, rota via pista2 e taxiG/H
         rota = [
           "pista2_fim",
           "taxiG_inicio",
@@ -559,7 +517,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
     }
 
-    // Popup para escolher posição livre no terminal
     function escolherPosicaoTerminal(el, voo) {
       const popup = document.createElement("div");
       popup.style.position = "fixed";
@@ -605,10 +562,9 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
         document.body.removeChild(popup);
         pos.classList.remove("livre");
 
-        // Animate to position inside terminal
         const rect = pos.getBoundingClientRect();
         const parentRect = aeroporto.getBoundingClientRect();
-        const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop + 2; // +2 para compensar bordas
+        const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop + 2;
         const destinoLeft = rect.left - parentRect.left + aeroporto.scrollLeft + 2;
 
         moverSuave(el, destinoLeft, destinoTop, () => {
@@ -644,7 +600,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       document.body.appendChild(popup);
     }
 
-    // Botão para trocar posição da aeronave estacionada
     function adicionarBotaoTrocarPosicao(el) {
       const idData = el.dataset.info;
       const btnExistente = aeroporto.querySelector(`.btn-trocar-posicao[data-id='${idData}']`);
@@ -685,7 +640,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       aeroporto.appendChild(btn);
     }
 
-    // Selecionar partida associada ao voo da aeronave
     function selecionarPartida(el, voo) {
       const popup = document.createElement("div");
       popup.style.position = "fixed";
@@ -762,15 +716,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
       document.body.appendChild(popup);
     }
 
-    // Esconder tooltip quando clicar fora
-    function hideTooltip(e) {
-      if (e.target !== currentTarget && !tooltip.contains(e.target)) {
-        tooltip.style.display = "none";
-        currentTarget = null;
-      }
-    }
-
-    // Inicialização
     document.addEventListener("DOMContentLoaded", () => {
       criarTerminais();
 
@@ -796,7 +741,6 @@ Agora, vou implementar este plano, criando a distribuição das posições ao re
         renderizarPartidas();
       });
 
-      // Clique em posição livre para mover aeronave estacionada
       document.addEventListener("click", (e) => {
         if(e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
           const aeronavesLaranja = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange" || a.style.background === "rgb(255, 165, 0)");
