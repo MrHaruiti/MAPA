@@ -1,20 +1,3 @@
-
-Você deixou claro que o projeto é fictício, um aeroporto com companhias e destinos reais, mas operações simuladas, portanto não precisa de dados reais nem integrações externas.
-
-Seu foco é que o painel de voos opere de forma visualmente correta e alinhada: terminais lado a lado, com 36 posições distribuídas ao redor de cada terminal, e movimentação das aeronaves seguindo taxiways e rotas bem definidas.
-
-Você perguntou se o código que enviei está completo — a versão que enviei contempla essas melhorias, só não duplicou as funções longas que já estavam no código original porque você já as tinha.
-
-A próxima etapa mais adequada: posso entregar o código completo integrado, com essas correções de layout e posicionamento, mais todas as funções (escolherPosicaoTerminal, botões, seleção de partidas, etc) 100% restauradas no mesmo arquivo HTML para você ter tudo pronto para rodar e testar localmente sem faltar nada.
-
-Assim, você terá um arquivo "painel_voos.html" completo, completo e alinhado com as expectativas visuais e funcionais.
-
-Vou preparar essa versão completa e organizada, mantendo tudo que já está funcionando e aplicando as correções visuais e estruturais conforme solicitado.
-
-
-
-`painel_voos_completo.html`
-```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -65,7 +48,7 @@ Vou preparar essa versão completa e organizada, mantendo tudo que já está fun
       font-size: 14px;
       color: #222;
       min-width: 1560px;
-      min-height: 1250px;
+      min-height: 1300px; /* Aumentei um pouco para caber os terminais maiores e taxiways */
     }
     /* Pista base - largas e longas */
     .pista {
@@ -92,11 +75,11 @@ Vou preparar essa versão completa e organizada, mantendo tudo que já está fun
     .taxiway-vertical {
       width: 28px;
     }
-    /* Terminais organizados lado a lado, não sobrepostas às taxiways */
+    /* Terminais organizados lado a lado em 2 linhas, com altura aumentada */
     .terminal {
       position: absolute;
       width: 260px;
-      height: 600px; /* ampliada para 36 posições */
+      height: 600px; /* altura para acomodar 36 posições ao redor */
       background-color: rgba(255 255 255 / 0.98);
       border-radius: 20px;
       box-shadow: 0 0 30px rgba(0,0,0,0.18);
@@ -246,7 +229,6 @@ Vou preparar essa versão completa e organizada, mantendo tudo que já está fun
       box-shadow: inset 0 0 12px #000;
       font-size: 15px;
     }
-    /* Botão trocar posição */
     .btn-trocar-posicao {
       position: absolute;
       padding: 5px 10px;
@@ -285,485 +267,487 @@ Vou preparar essa versão completa e organizada, mantendo tudo que já está fun
     <div id="taxiI" class="taxiway-horizontal" style="top: 1050px; left: 100px; width: 1200px; height: 35px;" title="Taxiway I"></div>
     <div id="taxiJ" class="taxiway-horizontal" style="top: 1100px; left: 100px; width: 1200px; height: 35px;" title="Taxiway J"></div>
 
-    <!-- Terminais lado a lado (linha superior e inferior) com 36 posições ao redor -->
+    <!-- Terminais lado a lado, duas linhas -->
+    <!-- Linha superior - TPS1 a TPS5 -->
     <div id="TPS1" class="terminal" style="top: 190px; left: 100px;" title="Terminal TPS1"></div>
-    <div id="TPS2" class="terminal" style="top: 190px; left: 410px;" title="Terminal TPS2"></div>
-    <div id="TPS3" class="terminal" style="top: 190px; left: 720px;" title="Terminal TPS3"></div>
-    <div id="TPS4" class="terminal" style="top: 190px; left: 1030px;" title="Terminal TPS4"></div>
-    <div id="TPS5" class="terminal" style="top: 190px; left: 1340px;" title="Terminal TPS5"></div>
+    <div id="TPS2" class="terminal" style="top: 190px; left: 380px;" title="Terminal TPS2"></div>
+    <div id="TPS3" class="terminal" style="top: 190px; left: 660px;" title="Terminal TPS3"></div>
+    <div id="TPS4" class="terminal" style="top: 190px; left: 940px;" title="Terminal TPS4"></div>
+    <div id="TPS5" class="terminal" style="top: 190px; left: 1220px;" title="Terminal TPS5"></div>
 
-    <div id="TPS6" class="terminal" style="top: 830px; left: 100px;" title="Terminal TPS6"></div>
-    <div id="TPS7" class="terminal" style="top: 830px; left: 410px;" title="Terminal TPS7"></div>
-    <div id="TPS8" class="terminal" style="top: 830px; left: 720px;" title="Terminal TPS8"></div>
-    <div id="TPS9" class="terminal" style="top: 830px; left: 1030px;" title="Terminal TPS9"></div>
-    <div id="TPS10" class="terminal" style="top: 830px; left: 1340px;" title="Terminal TPS10"></div>
+    <!-- Linha inferior - TPS6 a TPS10 -->
+    <div id="TPS6" class="terminal" style="top: 860px; left: 100px;" title="Terminal TPS6"></div>
+    <div id="TPS7" class="terminal" style="top: 860px; left: 380px;" title="Terminal TPS7"></div>
+    <div id="TPS8" class="terminal" style="top: 860px; left: 660px;" title="Terminal TPS8"></div>
+    <div id="TPS9" class="terminal" style="top: 860px; left: 940px;" title="Terminal TPS9"></div>
+    <div id="TPS10" class="terminal" style="top: 860px; left: 1220px;" title="Terminal TPS10"></div>
 
     <div id="tooltip" class="tooltip"></div>
   </div>
 
-  <script>
-    let chegadas = [], partidas = [];
-    const chegadasDiv = document.getElementById("chegadas");
-    const partidasDiv = document.getElementById("partidas");
-    const aeroporto = document.getElementById("aeroporto");
-    const tooltip = document.getElementById("tooltip");
-    let currentTarget = null;
-    const filasTaxi = {};
+<script>
+  let chegadas = [], partidas = [];
+  const chegadasDiv = document.getElementById("chegadas");
+  const partidasDiv = document.getElementById("partidas");
+  const aeroporto = document.getElementById("aeroporto");
+  const tooltip = document.getElementById("tooltip");
+  let currentTarget = null;
+  const filasTaxi = {};
 
-    const pontos = {
-      pista1_fim: {x: 1280, y: 60},
-      taxiA_inicio: {x: 1280, y: 100},
-      taxiA_meio: {x: 700, y: 100},
-      taxiB_descida: {x: 700, y: 150},
-      entrada_TPS1: {x: 180, y: 220},
-      entrada_TPS2: {x: 490, y: 220},
-      entrada_TPS3: {x: 800, y: 220},
-      entrada_TPS4: {x: 1110, y: 220},
-      entrada_TPS5: {x: 1420, y: 220},
+  const pontos = {
+    pista1_fim: {x: 1280, y: 60},
+    taxiA_inicio: {x: 1280, y: 100},
+    taxiA_meio: {x: 700, y: 100},
+    taxiB_descida: {x: 700, y: 150},
+    entrada_TPS1: {x: 180, y: 280},
+    entrada_TPS2: {x: 460, y: 280},
+    entrada_TPS3: {x: 740, y: 280},
+    entrada_TPS4: {x: 1020, y: 280},
+    entrada_TPS5: {x: 1300, y: 280},
 
-      pista1_decolagem_inicio: {x: 120, y: 520},
-      taxiC_inicio: {x: 120, y: 470},
-      taxiC_meio: {x: 700, y: 470},
-      taxiD_descida: {x: 700, y: 520},
-      entrada_TPS1_baixo: {x: 180, y: 900},
-      entrada_TPS2_baixo: {x: 490, y: 900},
-      entrada_TPS3_baixo: {x: 800, y: 900},
-      entrada_TPS4_baixo: {x: 1110, y: 900},
-      entrada_TPS5_baixo: {x: 1420, y: 900},
+    pista1_decolagem_inicio: {x: 120, y: 520},
+    taxiC_inicio: {x: 120, y: 470},
+    taxiC_meio: {x: 700, y: 470},
+    taxiD_descida: {x: 700, y: 520},
+    entrada_TPS1_baixo: {x: 180, y: 920},
+    entrada_TPS2_baixo: {x: 460, y: 920},
+    entrada_TPS3_baixo: {x: 740, y: 920},
+    entrada_TPS4_baixo: {x: 1020, y: 920},
+    entrada_TPS5_baixo: {x: 1300, y: 920},
 
-      pista2_fim: {x: 1280, y: 670},
-      taxiG_inicio: {x: 1280, y: 710},
-      taxiG_meio: {x: 700, y: 710},
-      taxiH_descida: {x: 700, y: 760},
-      entrada_TPS6: {x: 180, y: 860},
-      entrada_TPS7: {x: 490, y: 860},
-      entrada_TPS8: {x: 800, y: 860},
-      entrada_TPS9: {x: 1110, y: 860},
-      entrada_TPS10: {x: 1420, y: 860},
+    pista2_fim: {x: 1280, y: 670},
+    taxiG_inicio: {x: 1280, y: 710},
+    taxiG_meio: {x: 700, y: 710},
+    taxiH_descida: {x: 700, y: 760},
+    entrada_TPS6: {x: 180, y: 910},
+    entrada_TPS7: {x: 460, y: 910},
+    entrada_TPS8: {x: 740, y: 910},
+    entrada_TPS9: {x: 1020, y: 910},
+    entrada_TPS10: {x: 1300, y: 910},
 
-      pista2_decolagem_inicio: {x: 120, y: 1130},
-      taxiI_inicio: {x: 120, y: 1080},
-      taxiI_meio: {x: 700, y: 1080},
-      taxiJ_descida: {x: 700, y: 1130},
-      entrada_TPS6_baixo: {x: 180, y: 1170},
-      entrada_TPS7_baixo: {x: 490, y: 1170},
-      entrada_TPS8_baixo: {x: 800, y: 1170},
-      entrada_TPS9_baixo: {x: 1110, y: 1170},
-      entrada_TPS10_baixo: {x: 1420, y: 1170},
+    pista2_decolagem_inicio: {x: 120, y: 1130},
+    taxiI_inicio: {x: 120, y: 1080},
+    taxiI_meio: {x: 700, y: 1080},
+    taxiJ_descida: {x: 700, y: 1130},
+    entrada_TPS6_baixo: {x: 180, y: 1170},
+    entrada_TPS7_baixo: {x: 460, y: 1170},
+    entrada_TPS8_baixo: {x: 740, y: 1170},
+    entrada_TPS9_baixo: {x: 1020, y: 1170},
+    entrada_TPS10_baixo: {x: 1300, y: 1170},
+  };
+
+  function seguirRota(el, pontosRota, callback) {
+    if (pontosRota.length === 0) {
+      if (callback) callback();
+      return;
+    }
+    const ponto = pontos[pontosRota[0]];
+    if (!ponto) {
+      seguirRota(el, pontosRota.slice(1), callback);
+      return;
+    }
+    moverSuave(el, ponto.x, ponto.y, () => seguirRota(el, pontosRota.slice(1), callback));
+  }
+
+  function moverSuave(el, destinoX, destinoY, callback) {
+    clearInterval(el._intervalMover);
+    el._intervalMover = setInterval(() => {
+      const curX = parseFloat(el.style.left) || 0;
+      const curY = parseFloat(el.style.top) || 0;
+      const dx = destinoX - curX;
+      const dy = destinoY - curY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const passo = 6;
+      if(dist <= passo){
+        el.style.left = destinoX + "px";
+        el.style.top = destinoY + "px";
+        clearInterval(el._intervalMover);
+        if(callback) callback();
+      } else {
+        el.style.left = (curX + passo * dx / dist) + "px";
+        el.style.top = (curY + passo * dy / dist) + "px";
+      }
+    }, 20);
+  }
+
+  function criarTerminais() {
+    const terminaisIds = ["TPS1","TPS2","TPS3","TPS4","TPS5","TPS6","TPS7","TPS8","TPS9","TPS10"];
+    terminaisIds.forEach(id => {
+      const termDiv = document.getElementById(id);
+      termDiv.innerHTML = "";
+      const titulo = document.createElement("div");
+      titulo.className = "terminal-title";
+      titulo.textContent = id;
+      termDiv.appendChild(titulo);
+      const posicoesContainer = document.createElement("div");
+      posicoesContainer.className = "posicoes-container";
+
+      const largura = 260;
+      const altura = 600;
+      const gapHorizontal = (largura - 38) / 8; 
+      const gapVertical = (altura - 38) / 8;
+
+      for(let i=0; i<9; i++) {
+        const pos = document.createElement("div");
+        pos.className = "posicao livre posicao-bottom";
+        pos.style.left = (5 + i * gapHorizontal) + "px";
+        const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + i + 1;
+        pos.dataset.terminal = id;
+        pos.dataset.codigo = posicaoNum;
+        pos.title = posicaoNum.toString();
+        pos.innerText = posicaoNum;
+        posicoesContainer.appendChild(pos);
+      }
+      for(let i=0; i<9; i++) {
+        const pos = document.createElement("div");
+        pos.className = "posicao livre posicao-right";
+        pos.style.top = (5 + i * gapVertical) + "px";
+        const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 9 + i + 1;
+        pos.dataset.terminal = id;
+        pos.dataset.codigo = posicaoNum;
+        pos.title = posicaoNum.toString();
+        pos.innerText = posicaoNum;
+        posicoesContainer.appendChild(pos);
+      }
+      for(let i=0; i<9; i++) {
+        const pos = document.createElement("div");
+        pos.className = "posicao livre posicao-top";
+        pos.style.left = (5 + i * gapHorizontal) + "px";
+        const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 18 + i + 1;
+        pos.dataset.terminal = id;
+        pos.dataset.codigo = posicaoNum;
+        pos.title = posicaoNum.toString();
+        pos.innerText = posicaoNum;
+        posicoesContainer.appendChild(pos);
+      }
+      for(let i=0; i<9; i++) {
+        const pos = document.createElement("div");
+        pos.className = "posicao livre posicao-left";
+        pos.style.top = (5 + i * gapVertical) + "px";
+        const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 27 + i + 1;
+        pos.dataset.terminal = id;
+        pos.dataset.codigo = posicaoNum;
+        pos.title = posicaoNum.toString();
+        pos.innerText = posicaoNum;
+        posicoesContainer.appendChild(pos);
+      }
+      
+      termDiv.appendChild(posicoesContainer);
+    });
+  }
+
+  function renderizarChegadas() {
+    chegadasDiv.innerHTML = "";
+    chegadas.filter(v => v.status === "Aguardando Autorizacao").forEach(voo => {
+      const div = document.createElement("div");
+      div.className = "aeronave-lista";
+      div.innerHTML = `<strong>${voo.companhia} ${voo.voo}</strong><br>De: ${voo.cidade}<br>A/C: ${voo.aeronave}<br>Horário: ${voo.horario}<br>Status: ${voo.status}<br><button class="autorizar">Autorizar Pouso</button>`;
+      div.querySelector("button").onclick = () => autorizarPouso(voo);
+      chegadasDiv.appendChild(div);
+    });
+  }
+
+  function renderizarPartidas() {
+    partidasDiv.innerHTML = "";
+    partidas.filter(v => v.status === "Aguardando Associacao").forEach(voo => {
+      const div = document.createElement("div");
+      div.className = "partida-lista";
+      div.innerHTML = `<strong>${voo.companhia} ${voo.voo}</strong><br>Para: ${voo.cidade}<br>A/C: ${voo.aeronave}<br>Horário: ${voo.horario}<br>Status: ${voo.status}`;
+      partidasDiv.appendChild(div);
+    });
+  }
+
+  function autorizarPouso(voo) {
+    voo.status = "Pousando";
+    renderizarChegadas();
+
+    const el = document.createElement("div");
+    el.className = "aeronave";
+    el.innerText = voo.voo;
+    el.title = `${voo.companhia} ${voo.voo} - ${voo.cidade}`;
+    el.style.top = "60px";
+    el.style.left = "120px";
+    el.dataset.info = JSON.stringify(voo);
+    aeroporto.appendChild(el);
+
+    const terminalDestino = (voo.terminal || "TPS1").toUpperCase();
+
+    let rota = [];
+    if (["TPS1","TPS2","TPS3","TPS4","TPS5"].includes(terminalDestino)) {
+      rota = [
+        "pista1_fim",
+        "taxiA_inicio",
+        "taxiA_meio",
+        "taxiB_descida",
+        "entrada_" + terminalDestino
+      ];
+    } else {
+      rota = [
+        "pista2_fim",
+        "taxiG_inicio",
+        "taxiG_meio",
+        "taxiH_descida",
+        "entrada_" + terminalDestino
+      ];
+    }
+
+    seguirRota(el, rota, () => {
+      voo.status = "Aguardando Alocacao";
+      el.style.background = "orange";
+      el.dataset.info = JSON.stringify(voo);
+      escolherPosicaoTerminal(el, voo);
+    });
+
+    el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
+  }
+
+  function escolherPosicaoTerminal(el, voo) {
+    const popup = document.createElement("div");
+    popup.style.position = "fixed";
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.background = "#222";
+    popup.style.color = "#fff";
+    popup.style.padding = "22px";
+    popup.style.border = "2px solid #555";
+    popup.style.zIndex = 1001;
+    popup.style.maxWidth = "350px";
+    popup.style.borderRadius = "12px";
+    popup.innerHTML = "<strong>Escolher posição livre para estacionar</strong><br><br>";
+
+    const select = document.createElement("select");
+    select.style.width = "100%";
+    select.style.fontSize = "15px";
+
+    const posicoesLivres = Array.from(document.querySelectorAll(".posicao.livre")).filter(pos => pos.dataset.terminal === (voo.terminal || "TPS1").toUpperCase());
+    if (posicoesLivres.length === 0) {
+      select.innerHTML = "<option disabled>Nenhuma posição livre disponível</option>";
+    } else {
+      posicoesLivres.forEach((pos) => {
+        const opt = document.createElement("option");
+        opt.value = pos.dataset.codigo;
+        opt.textContent = pos.dataset.codigo + " (" + pos.dataset.terminal + ")";
+        select.appendChild(opt);
+      });
+    }
+    popup.appendChild(select);
+
+    const btnConfirmar = document.createElement("button");
+    btnConfirmar.textContent = "Confirmar";
+    btnConfirmar.className = "autorizar";
+    btnConfirmar.style.marginTop = "12px";
+    btnConfirmar.onclick = () => {
+      const codigoEscolhido = select.value;
+      const pos = Array.from(document.querySelectorAll(".posicao.livre"))
+        .find(p => p.dataset.codigo === codigoEscolhido);
+      if (!pos) return;
+
+      document.body.removeChild(popup);
+      pos.classList.remove("livre");
+
+      const rect = pos.getBoundingClientRect();
+      const parentRect = aeroporto.getBoundingClientRect();
+      const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop + 2;
+      const destinoLeft = rect.left - parentRect.left + aeroporto.scrollLeft + 2;
+
+      moverSuave(el, destinoLeft, destinoTop, () => {
+        el.style.background = "#1a73e8";
+        voo.status = "Estacionado";
+        voo.estacionado = true;
+        el.dataset.info = JSON.stringify(voo);
+
+        el.onclick = (evt) => {
+          evt.stopPropagation();
+          selecionarPartida(el, voo);
+        };
+
+        adicionarBotaoTrocarPosicao(el);
+      });
+    };
+    popup.appendChild(btnConfirmar);
+
+    const btnCancelar = document.createElement("button");
+    btnCancelar.textContent = "Cancelar";
+    btnCancelar.style.marginTop = "10px";
+    btnCancelar.style.background = "#b22";
+    btnCancelar.style.color = "#fff";
+    btnCancelar.style.border = "none";
+    btnCancelar.style.padding = "8px";
+    btnCancelar.style.borderRadius = "8px";
+    btnCancelar.style.width = "100%";
+    btnCancelar.style.fontWeight = "700";
+    btnCancelar.style.cursor = "pointer";
+    btnCancelar.onclick = () => document.body.removeChild(popup);
+    popup.appendChild(btnCancelar);
+
+    document.body.appendChild(popup);
+  }
+
+  function adicionarBotaoTrocarPosicao(el) {
+    const idData = el.dataset.info;
+    const btnExistente = aeroporto.querySelector(`.btn-trocar-posicao[data-id='${idData}']`);
+    if (btnExistente) btnExistente.remove();
+
+    const btn = document.createElement("button");
+    btn.className = "btn-trocar-posicao";
+    btn.textContent = "Trocar Posição";
+    btn.style.position = "absolute";
+    btn.style.left = el.style.left;
+    btn.style.top = (parseInt(el.style.top, 10) + 38) + "px";
+    btn.style.zIndex = 31;
+    btn.style.padding = "5px 10px";
+    btn.style.fontSize = "12px";
+    btn.style.borderRadius = "6px";
+    btn.style.cursor = "pointer";
+    btn.style.background = "#444";
+    btn.style.color = "#fff";
+    btn.dataset.id = idData;
+
+    btn.onclick = () => {
+      alert("Clique em uma nova posição livre para mover a aeronave.");
+      function moverClickHandler(e){
+        if(e.target.classList.contains("posicao") && e.target.classList.contains("livre")){
+          const novaTop = e.target.offsetTop + e.target.parentElement.offsetTop + aeroporto.scrollTop;
+          const novaLeft = e.target.offsetLeft + e.target.parentElement.offsetLeft + aeroporto.scrollLeft;
+          el.style.top = novaTop + "px";
+          el.style.left = novaLeft + "px";
+          e.target.classList.remove("livre");
+          btn.style.left = novaLeft + "px";
+          btn.style.top = (novaTop + 38) + "px";
+          document.removeEventListener("click", moverClickHandler);
+        }
+      }
+      document.addEventListener("click", moverClickHandler);
     };
 
-    function seguirRota(el, pontosRota, callback) {
-      if (pontosRota.length === 0) {
-        if (callback) callback();
-        return;
+    aeroporto.appendChild(btn);
+  }
+
+  function selecionarPartida(el, voo) {
+    const popup = document.createElement("div");
+    popup.style.position = "fixed";
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.background = "#222";
+    popup.style.color = "#fff";
+    popup.style.padding = "20px";
+    popup.style.border = "2px solid #555";
+    popup.style.zIndex = 1001;
+    popup.style.maxWidth = "380px";
+    popup.style.borderRadius = "12px";
+    popup.innerHTML = `<strong>Selecionar Partida para ${voo.voo}</strong><br><br>`;
+
+    const filtro = document.createElement("input");
+    filtro.placeholder = "Filtrar por destino ou voo...";
+    filtro.style.width = "100%";
+    filtro.style.marginBottom = "15px";
+    filtro.style.fontSize = "14px";
+    popup.appendChild(filtro);
+
+    const select = document.createElement("select");
+    select.style.width = "100%";
+    select.style.fontSize = "14px";
+    popup.appendChild(select);
+
+    function atualizarSelect() {
+      select.innerHTML = "";
+      const texto = filtro.value.toLowerCase();
+      partidas.filter(p => p.status === "Aguardando Associacao" && (
+        p.voo.toLowerCase().includes(texto) ||
+        p.cidade.toLowerCase().includes(texto) ||
+        p.aeronave.toLowerCase().includes(texto)
+      )).forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `${p.voo} - ${p.cidade} - ${p.horario}`;
+        select.appendChild(opt);
+      });
+    }
+    filtro.oninput = atualizarSelect;
+    atualizarSelect();
+
+    const btnConfirmar = document.createElement("button");
+    btnConfirmar.textContent = "Confirmar";
+    btnConfirmar.className = "autorizar";
+    btnConfirmar.style.marginTop = "15px";
+    btnConfirmar.onclick = () => {
+      const escolhido = partidas.find(p => p.id === select.value);
+      if (escolhido) {
+        escolhido.status = "Programado";
+        el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
+        renderizarPartidas();
       }
-      const ponto = pontos[pontosRota[0]];
-      if (!ponto) {
-        seguirRota(el, pontosRota.slice(1), callback);
-        return;
-      }
-      moverSuave(el, ponto.x, ponto.y, () => seguirRota(el, pontosRota.slice(1), callback));
-    }
+      document.body.removeChild(popup);
+    };
+    popup.appendChild(btnConfirmar);
 
-    function moverSuave(el, destinoX, destinoY, callback) {
-      clearInterval(el._intervalMover);
-      el._intervalMover = setInterval(() => {
-        const curX = parseFloat(el.style.left) || 0;
-        const curY = parseFloat(el.style.top) || 0;
-        const dx = destinoX - curX;
-        const dy = destinoY - curY;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const passo = 6;
-        if(dist <= passo){
-          el.style.left = destinoX + "px";
-          el.style.top = destinoY + "px";
-          clearInterval(el._intervalMover);
-          if(callback) callback();
-        } else {
-          el.style.left = (curX + passo * dx / dist) + "px";
-          el.style.top = (curY + passo * dy / dist) + "px";
-        }
-      }, 20);
-    }
+    const btnCancelar = document.createElement("button");
+    btnCancelar.textContent = "Fechar";
+    btnCancelar.style.marginTop = "10px";
+    btnCancelar.style.background = "#b22";
+    btnCancelar.style.color = "#fff";
+    btnCancelar.style.border = "none";
+    btnCancelar.style.padding = "7px";
+    btnCancelar.style.borderRadius = "8px";
+    btnCancelar.style.width = "100%";
+    btnCancelar.style.fontWeight = "700";
+    btnCancelar.style.cursor = "pointer";
+    btnCancelar.onclick = () => document.body.removeChild(popup);
+    popup.appendChild(btnCancelar);
 
-    function criarTerminais() {
-      const terminaisIds = ["TPS1","TPS2","TPS3","TPS4","TPS5","TPS6","TPS7","TPS8","TPS9","TPS10"];
-      terminaisIds.forEach(id => {
-        const termDiv = document.getElementById(id);
-        termDiv.innerHTML = "";
-        const titulo = document.createElement("div");
-        titulo.className = "terminal-title";
-        titulo.textContent = id;
-        termDiv.appendChild(titulo);
-        const posicoesContainer = document.createElement("div");
-        posicoesContainer.className = "posicoes-container";
+    document.body.appendChild(popup);
+  }
 
-        const largura = 260;
-        const altura = 600;
-        const gapHorizontal = (largura - 38) / 8; 
-        const gapVertical = (altura - 38) / 8;
+  document.addEventListener("DOMContentLoaded", () => {
+    criarTerminais();
 
-        for(let i=0; i<9; i++) {
-          const pos = document.createElement("div");
-          pos.className = "posicao livre posicao-bottom";
-          pos.style.left = (5 + i * gapHorizontal) + "px";
-          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + i + 1;
-          pos.dataset.terminal = id;
-          pos.dataset.codigo = posicaoNum;
-          pos.title = posicaoNum.toString();
-          pos.innerText = posicaoNum;
-          posicoesContainer.appendChild(pos);
-        }
-        for(let i=0; i<9; i++) {
-          const pos = document.createElement("div");
-          pos.className = "posicao livre posicao-right";
-          pos.style.top = (5 + i * gapVertical) + "px";
-          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 9 + i + 1;
-          pos.dataset.terminal = id;
-          pos.dataset.codigo = posicaoNum;
-          pos.title = posicaoNum.toString();
-          pos.innerText = posicaoNum;
-          posicoesContainer.appendChild(pos);
-        }
-        for(let i=0; i<9; i++) {
-          const pos = document.createElement("div");
-          pos.className = "posicao livre posicao-top";
-          pos.style.left = (5 + i * gapHorizontal) + "px";
-          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 18 + i + 1;
-          pos.dataset.terminal = id;
-          pos.dataset.codigo = posicaoNum;
-          pos.title = posicaoNum.toString();
-          pos.innerText = posicaoNum;
-          posicoesContainer.appendChild(pos);
-        }
-        for(let i=0; i<9; i++) {
-          const pos = document.createElement("div");
-          pos.className = "posicao livre posicao-left";
-          pos.style.top = (5 + i * gapVertical) + "px";
-          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 27 + i + 1;
-          pos.dataset.terminal = id;
-          pos.dataset.codigo = posicaoNum;
-          pos.title = posicaoNum.toString();
-          pos.innerText = posicaoNum;
-          posicoesContainer.appendChild(pos);
-        }
-        
-        termDiv.appendChild(posicoesContainer);
-      });
-    }
-
-    function renderizarChegadas() {
-      chegadasDiv.innerHTML = "";
-      chegadas.filter(v => v.status === "Aguardando Autorizacao").forEach(voo => {
-        const div = document.createElement("div");
-        div.className = "aeronave-lista";
-        div.innerHTML = `<strong>${voo.companhia} ${voo.voo}</strong><br>De: ${voo.cidade}<br>A/C: ${voo.aeronave}<br>Horário: ${voo.horario}<br>Status: ${voo.status}<br><button class="autorizar">Autorizar Pouso</button>`;
-        div.querySelector("button").onclick = () => autorizarPouso(voo);
-        chegadasDiv.appendChild(div);
-      });
-    }
-
-    function renderizarPartidas() {
-      partidasDiv.innerHTML = "";
-      partidas.filter(v => v.status === "Aguardando Associacao").forEach(voo => {
-        const div = document.createElement("div");
-        div.className = "partida-lista";
-        div.innerHTML = `<strong>${voo.companhia} ${voo.voo}</strong><br>Para: ${voo.cidade}<br>A/C: ${voo.aeronave}<br>Horário: ${voo.horario}<br>Status: ${voo.status}`;
-        partidasDiv.appendChild(div);
-      });
-    }
-
-    function autorizarPouso(voo) {
-      voo.status = "Pousando";
+    fetch("backup_voos.json")
+    .then(r => r.json())
+    .then(data => {
+      chegadas = data.chegadas.map((v,i) => ({...v, id:"CHG"+i, status:"Aguardando Autorizacao"}));
+      partidas = data.partidas.map((v,i) => ({...v, id:"PRT"+i, status:"Aguardando Associacao"}));
       renderizarChegadas();
-
-      const el = document.createElement("div");
-      el.className = "aeronave";
-      el.innerText = voo.voo;
-      el.title = `${voo.companhia} ${voo.voo} - ${voo.cidade}`;
-      el.style.top = "60px";
-      el.style.left = "120px";
-      el.dataset.info = JSON.stringify(voo);
-      aeroporto.appendChild(el);
-
-      const terminalDestino = (voo.terminal || "TPS1").toUpperCase();
-
-      let rota = [];
-      if (["TPS1","TPS2","TPS3","TPS4","TPS5"].includes(terminalDestino)) {
-        rota = [
-          "pista1_fim",
-          "taxiA_inicio",
-          "taxiA_meio",
-          "taxiB_descida",
-          "entrada_" + terminalDestino
-        ];
-      } else {
-        rota = [
-          "pista2_fim",
-          "taxiG_inicio",
-          "taxiG_meio",
-          "taxiH_descida",
-          "entrada_" + terminalDestino
-        ];
-      }
-
-      seguirRota(el, rota, () => {
-        voo.status = "Aguardando Alocacao";
-        el.style.background = "orange";
-        el.dataset.info = JSON.stringify(voo);
-        escolherPosicaoTerminal(el, voo);
-      });
-
-      el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
-    }
-
-    function escolherPosicaoTerminal(el, voo) {
-      const popup = document.createElement("div");
-      popup.style.position = "fixed";
-      popup.style.top = "50%";
-      popup.style.left = "50%";
-      popup.style.transform = "translate(-50%, -50%)";
-      popup.style.background = "#222";
-      popup.style.color = "#fff";
-      popup.style.padding = "22px";
-      popup.style.border = "2px solid #555";
-      popup.style.zIndex = 1001;
-      popup.style.maxWidth = "350px";
-      popup.style.borderRadius = "12px";
-      popup.innerHTML = "<strong>Escolher posição livre para estacionar</strong><br><br>";
-
-      const select = document.createElement("select");
-      select.style.width = "100%";
-      select.style.fontSize = "15px";
-
-      const posicoesLivres = Array.from(document.querySelectorAll(".posicao.livre")).filter(pos => pos.dataset.terminal === (voo.terminal || "TPS1").toUpperCase());
-      if (posicoesLivres.length === 0) {
-        select.innerHTML = "<option disabled>Nenhuma posição livre disponível</option>";
-      } else {
-        posicoesLivres.forEach((pos) => {
-          const opt = document.createElement("option");
-          opt.value = pos.dataset.codigo;
-          opt.textContent = pos.dataset.codigo + " (" + pos.dataset.terminal + ")";
-          select.appendChild(opt);
-        });
-      }
-      popup.appendChild(select);
-
-      const btnConfirmar = document.createElement("button");
-      btnConfirmar.textContent = "Confirmar";
-      btnConfirmar.className = "autorizar";
-      btnConfirmar.style.marginTop = "12px";
-      btnConfirmar.onclick = () => {
-        const codigoEscolhido = select.value;
-        const pos = Array.from(document.querySelectorAll(".posicao.livre"))
-          .find(p => p.dataset.codigo === codigoEscolhido);
-        if (!pos) return;
-
-        document.body.removeChild(popup);
-        pos.classList.remove("livre");
-
-        const rect = pos.getBoundingClientRect();
-        const parentRect = aeroporto.getBoundingClientRect();
-        const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop + 2;
-        const destinoLeft = rect.left - parentRect.left + aeroporto.scrollLeft + 2;
-
-        moverSuave(el, destinoLeft, destinoTop, () => {
-          el.style.background = "#1a73e8";
-          voo.status = "Estacionado";
-          voo.estacionado = true;
-          el.dataset.info = JSON.stringify(voo);
-
-          el.onclick = (evt) => {
-            evt.stopPropagation();
-            selecionarPartida(el, voo);
-          };
-
-          adicionarBotaoTrocarPosicao(el);
-        });
-      };
-      popup.appendChild(btnConfirmar);
-
-      const btnCancelar = document.createElement("button");
-      btnCancelar.textContent = "Cancelar";
-      btnCancelar.style.marginTop = "10px";
-      btnCancelar.style.background = "#b22";
-      btnCancelar.style.color = "#fff";
-      btnCancelar.style.border = "none";
-      btnCancelar.style.padding = "8px";
-      btnCancelar.style.borderRadius = "8px";
-      btnCancelar.style.width = "100%";
-      btnCancelar.style.fontWeight = "700";
-      btnCancelar.style.cursor = "pointer";
-      btnCancelar.onclick = () => document.body.removeChild(popup);
-      popup.appendChild(btnCancelar);
-
-      document.body.appendChild(popup);
-    }
-
-    function adicionarBotaoTrocarPosicao(el) {
-      const idData = el.dataset.info;
-      const btnExistente = aeroporto.querySelector(`.btn-trocar-posicao[data-id='${idData}']`);
-      if (btnExistente) btnExistente.remove();
-
-      const btn = document.createElement("button");
-      btn.className = "btn-trocar-posicao";
-      btn.textContent = "Trocar Posição";
-      btn.style.position = "absolute";
-      btn.style.left = el.style.left;
-      btn.style.top = (parseInt(el.style.top, 10) + 38) + "px";
-      btn.style.zIndex = 31;
-      btn.style.padding = "5px 10px";
-      btn.style.fontSize = "12px";
-      btn.style.borderRadius = "6px";
-      btn.style.cursor = "pointer";
-      btn.style.background = "#444";
-      btn.style.color = "#fff";
-      btn.dataset.id = idData;
-
-      btn.onclick = () => {
-        alert("Clique em uma nova posição livre para mover a aeronave.");
-        function moverClickHandler(e){
-          if(e.target.classList.contains("posicao") && e.target.classList.contains("livre")){
-            const novaTop = e.target.offsetTop + e.target.parentElement.offsetTop + aeroporto.scrollTop;
-            const novaLeft = e.target.offsetLeft + e.target.parentElement.offsetLeft + aeroporto.scrollLeft;
-            el.style.top = novaTop + "px";
-            el.style.left = novaLeft + "px";
-            e.target.classList.remove("livre");
-            btn.style.left = novaLeft + "px";
-            btn.style.top = (novaTop + 38) + "px";
-            document.removeEventListener("click", moverClickHandler);
-          }
-        }
-        document.addEventListener("click", moverClickHandler);
-      };
-
-      aeroporto.appendChild(btn);
-    }
-
-    function selecionarPartida(el, voo) {
-      const popup = document.createElement("div");
-      popup.style.position = "fixed";
-      popup.style.top = "50%";
-      popup.style.left = "50%";
-      popup.style.transform = "translate(-50%, -50%)";
-      popup.style.background = "#222";
-      popup.style.color = "#fff";
-      popup.style.padding = "20px";
-      popup.style.border = "2px solid #555";
-      popup.style.zIndex = 1001;
-      popup.style.maxWidth = "380px";
-      popup.style.borderRadius = "12px";
-      popup.innerHTML = `<strong>Selecionar Partida para ${voo.voo}</strong><br><br>`;
-
-      const filtro = document.createElement("input");
-      filtro.placeholder = "Filtrar por destino ou voo...";
-      filtro.style.width = "100%";
-      filtro.style.marginBottom = "15px";
-      filtro.style.fontSize = "14px";
-      popup.appendChild(filtro);
-
-      const select = document.createElement("select");
-      select.style.width = "100%";
-      select.style.fontSize = "14px";
-      popup.appendChild(select);
-
-      function atualizarSelect() {
-        select.innerHTML = "";
-        const texto = filtro.value.toLowerCase();
-        partidas.filter(p => p.status === "Aguardando Associacao" && (
-          p.voo.toLowerCase().includes(texto) ||
-          p.cidade.toLowerCase().includes(texto) ||
-          p.aeronave.toLowerCase().includes(texto)
-        )).forEach(p => {
-          const opt = document.createElement("option");
-          opt.value = p.id;
-          opt.textContent = `${p.voo} - ${p.cidade} - ${p.horario}`;
-          select.appendChild(opt);
-        });
-      }
-      filtro.oninput = atualizarSelect;
-      atualizarSelect();
-
-      const btnConfirmar = document.createElement("button");
-      btnConfirmar.textContent = "Confirmar";
-      btnConfirmar.className = "autorizar";
-      btnConfirmar.style.marginTop = "15px";
-      btnConfirmar.onclick = () => {
-        const escolhido = partidas.find(p => p.id === select.value);
-        if (escolhido) {
-          escolhido.status = "Programado";
-          el.title = `Partida para ${escolhido.cidade} ${escolhido.horario}`;
-          renderizarPartidas();
-        }
-        document.body.removeChild(popup);
-      };
-      popup.appendChild(btnConfirmar);
-
-      const btnCancelar = document.createElement("button");
-      btnCancelar.textContent = "Fechar";
-      btnCancelar.style.marginTop = "10px";
-      btnCancelar.style.background = "#b22";
-      btnCancelar.style.color = "#fff";
-      btnCancelar.style.border = "none";
-      btnCancelar.style.padding = "7px";
-      btnCancelar.style.borderRadius = "8px";
-      btnCancelar.style.width = "100%";
-      btnCancelar.style.fontWeight = "700";
-      btnCancelar.style.cursor = "pointer";
-      btnCancelar.onclick = () => document.body.removeChild(popup);
-      popup.appendChild(btnCancelar);
-
-      document.body.appendChild(popup);
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      criarTerminais();
-
-      fetch("backup_voos.json")
-      .then(r => r.json())
-      .then(data => {
-        chegadas = data.chegadas.map((v,i) => ({...v, id:"CHG"+i, status:"Aguardando Autorizacao"}));
-        partidas = data.partidas.map((v,i) => ({...v, id:"PRT"+i, status:"Aguardando Associacao"}));
-        renderizarChegadas();
-        renderizarPartidas();
-      })
-      .catch(() => {
-        console.warn("Falha ao carregar dados JSON. Carregando dados de exemplo.");
-        chegadas = [
-          {id:'CHG0', companhia:'Azul', voo:'AZU1234', cidade:'São Paulo', aeronave:'E190', horario:'14:30', status:'Aguardando Autorizacao'},
-          {id:'CHG1', companhia:'Latam', voo:'LAT4321', cidade:'Rio de Janeiro', aeronave:'A320', horario:'15:00', status:'Aguardando Autorizacao'}
-        ];
-        partidas = [
-          {id:'PRT0', companhia:'Azul', voo:'AZU5678', cidade:'Belo Horizonte', aeronave:'E195', horario:'16:00', status:'Aguardando Associacao'},
-          {id:'PRT1', companhia:'Latam', voo:'LAT8765', cidade:'Curitiba', aeronave:'A321', horario:'17:30', status:'Aguardando Associacao'}
-        ];
-        renderizarChegadas();
-        renderizarPartidas();
-      });
-
-      document.addEventListener("click", (e) => {
-        if(e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
-          const aeronavesLaranja = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange" || a.style.background === "rgb(255, 165, 0)");
-          if(aeronavesLaranja.length === 0) return;
-          const aeronave = aeronavesLaranja[0];
-          const pos = e.target;
-          const destinoTop = pos.offsetTop + pos.parentElement.offsetTop + aeroporto.scrollTop;
-          const destinoLeft = pos.offsetLeft + pos.parentElement.offsetLeft + aeroporto.scrollLeft;
-          moverSuave(aeronave, destinoLeft, destinoTop, () => {
-            aeronave.style.background = "#1a73e8";
-            pos.classList.remove("livre");
-            const vooData = JSON.parse(aeronave.dataset.info);
-            vooData.status = "Estacionado";
-            aeronave.dataset.info = JSON.stringify(vooData);
-            aeronave.onclick = (evt) => {
-              evt.stopPropagation();
-              selecionarPartida(aeronave, vooData);
-            };
-          });
-        }
-      });
+      renderizarPartidas();
+    })
+    .catch(() => {
+      console.warn("Falha ao carregar dados JSON. Carregando dados de exemplo.");
+      chegadas = [
+        {id:'CHG0', companhia:'Azul', voo:'AZU1234', cidade:'São Paulo', aeronave:'E190', horario:'14:30', status:'Aguardando Autorizacao'},
+        {id:'CHG1', companhia:'Latam', voo:'LAT4321', cidade:'Rio de Janeiro', aeronave:'A320', horario:'15:00', status:'Aguardando Autorizacao'}
+      ];
+      partidas = [
+        {id:'PRT0', companhia:'Azul', voo:'AZU5678', cidade:'Belo Horizonte', aeronave:'E195', horario:'16:00', status:'Aguardando Associacao'},
+        {id:'PRT1', companhia:'Latam', voo:'LAT8765', cidade:'Curitiba', aeronave:'A321', horario:'17:30', status:'Aguardando Associacao'}
+      ];
+      renderizarChegadas();
+      renderizarPartidas();
     });
-  </script>
+
+    document.addEventListener("click", (e) => {
+      if(e.target.classList.contains("posicao") && e.target.classList.contains("livre")) {
+        const aeronavesLaranja = Array.from(document.querySelectorAll(".aeronave")).filter(a => a.style.background === "orange" || a.style.background === "rgb(255, 165, 0)");
+        if(aeronavesLaranja.length === 0) return;
+        const aeronave = aeronavesLaranja[0];
+        const pos = e.target;
+        const destinoTop = pos.offsetTop + pos.parentElement.offsetTop + aeroporto.scrollTop;
+        const destinoLeft = pos.offsetLeft + pos.parentElement.offsetLeft + aeroporto.scrollLeft;
+        moverSuave(aeronave, destinoLeft, destinoTop, () => {
+          aeronave.style.background = "#1a73e8";
+          pos.classList.remove("livre");
+          const vooData = JSON.parse(aeronave.dataset.info);
+          vooData.status = "Estacionado";
+          aeronave.dataset.info = JSON.stringify(vooData);
+          aeronave.onclick = (evt) => {
+            evt.stopPropagation();
+            selecionarPartida(aeronave, vooData);
+          };
+        });
+      }
+    });
+  });
+</script>
 </body>
 </html>
 
