@@ -204,26 +204,6 @@
       box-shadow: inset 0 0 12px #000;
       font-size: 15px;
     }
-
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-        margin-left: 0;
-      }
-
-      #painel {
-        position: static;
-        width: 100%;
-        height: auto;
-        box-shadow: none;
-      }
-
-      #aeroporto {
-        margin-left: 0;
-        min-width: auto;
-      }
-    }
-
   </style>
 </head>
 <body>
@@ -281,6 +261,28 @@
     const filasTaxi = {};
 
     // Função para movimentação suave da aeronave
+
+    const pontos = {
+      pista1_fim: {x: 1280, y: 60},
+      taxiA_inicio: {x: 1280, y: 100},
+      taxiA_meio: {x: 700, y: 100},
+      taxiB_descida: {x: 700, y: 150},
+      entrada_TPS1: {x: 180, y: 220},
+      entrada_TPS2: {x: 490, y: 220},
+      entrada_TPS3: {x: 800, y: 220},
+      entrada_TPS4: {x: 1110, y: 220},
+      entrada_TPS5: {x: 1420, y: 220}
+    };
+
+    function seguirRota(el, pontosRota, callback) {
+      if (pontosRota.length === 0) {
+        if (callback) callback();
+        return;
+      }
+      const ponto = pontos[pontosRota[0]];
+      moverSuave(el, ponto.x, ponto.y, () => seguirRota(el, pontosRota.slice(1), callback));
+    }
+
     function moverSuave(el, destinoX, destinoY, callback) {
       clearInterval(el._intervalMover);
       el._intervalMover = setInterval(() => {
@@ -368,9 +370,14 @@
       el.dataset.info = JSON.stringify(voo);
       aeroporto.appendChild(el);
 
-      moverSuave(el, 1280, 60, () => {
-        voo.status = "Taxiando";
-        taxiwayParaTerminais(el, voo, ["taxiA","taxiB"], ["TPS1","TPS2","TPS3","TPS4","TPS5"]);
+      const terminalDestino = (voo.terminal || "TPS1").toUpperCase();
+      const rota = ["pista1_fim", "taxiA_inicio", "taxiA_meio", "taxiB_descida", "entrada_" + terminalDestino];
+
+      seguirRota(el, rota, () => {
+        voo.status = "Aguardando Alocacao";
+        el.style.background = "orange";
+        el.dataset.info = JSON.stringify(voo);
+        escolherPosicaoTerminal(el, voo);
       });
 
       el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
@@ -455,8 +462,10 @@
         pos.classList.remove("livre");
 
         // Animate to position inside terminal
-        const destinoTop = pos.offsetTop + pos.parentElement.offsetTop + aeroporto.scrollTop;
-        const destinoLeft = pos.offsetLeft + pos.parentElement.offsetLeft + aeroporto.scrollLeft;
+        const rect = pos.getBoundingClientRect();
+        const parentRect = aeroporto.getBoundingClientRect();
+        const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop;
+        const destinoLeft = rect.left - parentRect.left + aeroporto.scrollLeft;
 
         moverSuave(el, destinoLeft, destinoTop, () => {
           el.style.background = "#1a73e8";
