@@ -1,3 +1,32 @@
+
+Você tem um painel de voos com pistas, taxiways, terminais e aeronaves. Atualmente, as aeronaves não seguem taxiways corretamente e andam aleatoriamente.
+
+O problema principal é:
+1) A movimentação das aeronaves não está seguindo as taxiways — as conexões entre pistas, taxiways e terminais precisam ser claras e representam um caminho sequencial coerente para as aeronaves transitarem.
+2) As taxiways atualmente não têm ligação visual evidente com pistas e terminais.
+3) Os terminais têm 30 posições apenas em um lado (lado direito vertical); o pedido é distribuir 36 posições ao redor do terminal — provavelmente divididas entre lados esquerdo, direito, topo e base, para os 10 terminais.
+
+Plano detalhado das mudanças:
+
+- Corrigir a movimentação das aeronaves para seguir taxiways claramente definidas:
+   - Ajustar os pontos de movimento (rota) para refletir estas ligações visuais.
+   - Definir pontos adicionais para conectar pistas às taxiways e dos taxiways às entradas múltiplas dos terminais.
+
+- Adicionar visualmente ligações entre pistas e taxiways e entre taxiways e terminais — talvez com elementos visuais ou ajustes de position para taxiways, para que pareçam canalizações ligando pista-terminal.
+
+- Modificar o DOM para as posições dentro dos terminais, de 30 posições verticais do lado direito para 36 posições distribuídas ao redor (exemplo: direita, esquerda, topo, base), um total de 36 por terminal para os 10 terminais.
+
+- Ajustar o CSS das posições para que elas estejam distribuídas ao redor, mantendo bom espaçamento e com design alinhado.
+
+Os arquivos a editar são só o HTML (separar posições), a parte das posições criadas em JS (na função criarTerminais), o CSS para ajustar as posições ao longo dos quatro lados, e o script de movimentação das aeronaves para seguir o caminho correto.
+
+Followup: Testar no navegador.
+
+Agora, vou implementar este plano, criando a distribuição das posições ao redor dos terminais e ajustando a movimentação para seguir taxiways coerentes. Também ajustarei CSS para suportar a nova disposição das posições.
+
+
+`painel_voos.html`
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -93,6 +122,8 @@
       flex-direction: column;
       justify-content: flex-start;
       overflow-y: auto;
+      /* relative for position absolute children */
+      position: relative;
     }
     .terminal-title {
       font-weight: 700;
@@ -102,18 +133,23 @@
       margin-bottom: 10px;
       user-select: none;
       text-align: center;
+      position: sticky;
+      top: 0;
+      background: rgba(255 255 255 / 0.98);
+      z-index: 21;
     }
-    /* Posições verticalizadas na lateral direita do terminal */
+    /* Posições distribuídas ao redor do terminal */
     .posicoes-container {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: flex-start;
-      padding-left: 6px;
+      position: relative;
+      width: 260px;
+      height: 400px;
+      pointer-events: none; /* disable pointer events here, enable in posicao */
     }
+    /* Posicoes em volta do terminal */
     .posicao {
-      min-width: 38px;
+      position: absolute;
+      width: 38px;
       height: 30px;
       background: #ddd;
       border: 2px solid #999;
@@ -130,6 +166,8 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+      pointer-events: auto; /* enable pointer events for posicoes */
+      text-align: center;
     }
     .posicao.livre {
       background: #cfc;
@@ -140,7 +178,37 @@
       background: #9f9;
       border-color: #282;
     }
-    /* Aeronaves */
+    /* Distribuição das 36 posições - 9 embaixo, 9 na lateral direita, 9 em cima, 9 na lateral esquerda */
+    /* Inferior - bottom */
+    .posicao-bottom {
+      bottom: 5px;
+      /* distributed from left to right with gap */
+    }
+    /* Superior - top */
+    .posicao-top {
+      top: 5px;
+      /* distributed left to right */
+    }
+    /* Lateral direita - right */
+    .posicao-right {
+      right: 5px;
+      width: 30px;
+      height: 38px;
+      line-height: 38px;
+      padding: 0;
+      /* distributed from top to bottom */
+    }
+    /* Lateral esquerda - left */
+    .posicao-left {
+      left: 5px;
+      width: 30px;
+      height: 38px;
+      line-height: 38px;
+      padding: 0;
+      /* distributed from top to bottom */
+    }
+
+    /* A aeronaves */
     .aeronave {
       width: 34px;
       height: 34px;
@@ -233,7 +301,7 @@
     <div id="taxiI" class="taxiway-horizontal" style="top: 1050px; left: 100px; width: 1200px; height: 35px;" title="Taxiway I"></div>
     <div id="taxiJ" class="taxiway-horizontal" style="top: 1100px; left: 100px; width: 1200px; height: 35px;" title="Taxiway J"></div>
 
-    <!-- Terminais lado a lado em concourses, com posicoes verticais no lado direito -->
+    <!-- Terminais lado a lado em concourses, com posicoes verticais e horizontais ao redor -->
     <!-- Linha superior - TPS1 a TPS5 -->
     <div id="TPS1" class="terminal" style="top: 190px; left: 100px;" title="Terminal TPS1"></div>
     <div id="TPS2" class="terminal" style="top: 190px; left: 410px;" title="Terminal TPS2"></div>
@@ -261,7 +329,7 @@
     const filasTaxi = {};
 
     // Função para movimentação suave da aeronave
-
+    // Pontos para representar caminhos pelas taxiways, incluindo mais pontos para ligar pistas, taxiways, terminais
     const pontos = {
       pista1_fim: {x: 1280, y: 60},
       taxiA_inicio: {x: 1280, y: 100},
@@ -271,7 +339,37 @@
       entrada_TPS2: {x: 490, y: 220},
       entrada_TPS3: {x: 800, y: 220},
       entrada_TPS4: {x: 1110, y: 220},
-      entrada_TPS5: {x: 1420, y: 220}
+      entrada_TPS5: {x: 1420, y: 220},
+
+      pista1_decolagem_inicio: {x: 120, y: 520},
+      taxiC_inicio: {x: 120, y: 470},
+      taxiC_meio: {x: 700, y: 470},
+      taxiD_descida: {x: 700, y: 520},
+      entrada_TPS1_baixo: {x: 180, y: 900},
+      entrada_TPS2_baixo: {x: 490, y: 900},
+      entrada_TPS3_baixo: {x: 800, y: 900},
+      entrada_TPS4_baixo: {x: 1110, y: 900},
+      entrada_TPS5_baixo: {x: 1420, y: 900},
+
+      pista2_fim: {x: 1280, y: 670},
+      taxiG_inicio: {x: 1280, y: 710},
+      taxiG_meio: {x: 700, y: 710},
+      taxiH_descida: {x: 700, y: 760},
+      entrada_TPS6: {x: 180, y: 860},
+      entrada_TPS7: {x: 490, y: 860},
+      entrada_TPS8: {x: 800, y: 860},
+      entrada_TPS9: {x: 1110, y: 860},
+      entrada_TPS10: {x: 1420, y: 860},
+
+      pista2_decolagem_inicio: {x: 120, y: 1130},
+      taxiI_inicio: {x: 120, y: 1080},
+      taxiI_meio: {x: 700, y: 1080},
+      taxiJ_descida: {x: 700, y: 1130},
+      entrada_TPS6_baixo: {x: 180, y: 1170},
+      entrada_TPS7_baixo: {x: 490, y: 1170},
+      entrada_TPS8_baixo: {x: 800, y: 1170},
+      entrada_TPS9_baixo: {x: 1110, y: 1170},
+      entrada_TPS10_baixo: {x: 1420, y: 1170},
     };
 
     function seguirRota(el, pontosRota, callback) {
@@ -280,6 +378,11 @@
         return;
       }
       const ponto = pontos[pontosRota[0]];
+      if (!ponto) {
+        // If point undefined, skip to next
+        seguirRota(el, pontosRota.slice(1), callback);
+        return;
+      }
       moverSuave(el, ponto.x, ponto.y, () => seguirRota(el, pontosRota.slice(1), callback));
     }
 
@@ -304,7 +407,7 @@
       }, 20);
     }
 
-    // Cria terminais com posições verticais na lateral direita (dentro do terminal)
+    // Cria terminais com posições distribuídas ao redor (36 por terminal)
     function criarTerminais() {
       const terminaisIds = ["TPS1","TPS2","TPS3","TPS4","TPS5","TPS6","TPS7","TPS8","TPS9","TPS10"];
       terminaisIds.forEach(id => {
@@ -318,17 +421,68 @@
         // Container de posições
         const posicoesContainer = document.createElement("div");
         posicoesContainer.className = "posicoes-container";
-        // Criar 30 posições verticais
-        for(let p=1; p<=30 ; p++) {
-          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + p;
+
+        // Distribuir 36 posições em volta:
+        // 9 abaixo (bottom), 9 à direita (right), 9 no topo (top), 9 à esquerda (left)
+        // Calcular espaçamento proporcional para cada lado
+
+        // Cálculos para bottom e top (largura do terminal 260px)
+        const espacoHorizontal = 260 - 38; // deixa margem curta: 222px
+        const gapHorizontal = espacoHorizontal / 8; // 8 espaços entre 9 posicoes
+
+        // Cálculos para left e right (altura do terminal 400px)
+        const espacoVertical = 400 - 38;  // 362px
+        const gapVertical = espacoVertical / 8; // 8 espaços entre 9 posicoes
+
+        // Criar posicoes bottom
+        for(let i=0; i<9; i++) {
           const pos = document.createElement("div");
-          pos.className = "posicao livre";
+          pos.className = "posicao livre posicao-bottom";
+          pos.style.left = (5 + i * gapHorizontal) + "px";
+          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + i + 1;
           pos.dataset.terminal = id;
           pos.dataset.codigo = posicaoNum;
           pos.title = posicaoNum.toString();
           pos.innerText = posicaoNum;
           posicoesContainer.appendChild(pos);
         }
+        // Criar posicoes right
+        for(let i=0; i<9; i++) {
+          const pos = document.createElement("div");
+          pos.className = "posicao livre posicao-right";
+          pos.style.top = (5 + i * gapVertical) + "px";
+          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 9 + i + 1;
+          pos.dataset.terminal = id;
+          pos.dataset.codigo = posicaoNum;
+          pos.title = posicaoNum.toString();
+          pos.innerText = posicaoNum;
+          posicoesContainer.appendChild(pos);
+        }
+        // Criar posicoes top
+        for(let i=0; i<9; i++) {
+          const pos = document.createElement("div");
+          pos.className = "posicao livre posicao-top";
+          pos.style.left = (5 + i * gapHorizontal) + "px";
+          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 18 + i + 1;
+          pos.dataset.terminal = id;
+          pos.dataset.codigo = posicaoNum;
+          pos.title = posicaoNum.toString();
+          pos.innerText = posicaoNum;
+          posicoesContainer.appendChild(pos);
+        }
+        // Criar posicoes left
+        for(let i=0; i<9; i++) {
+          const pos = document.createElement("div");
+          pos.className = "posicao livre posicao-left";
+          pos.style.top = (5 + i * gapVertical) + "px";
+          const posicaoNum = (parseInt(id.replace(/\D/g,"")))*100 + 27 + i + 1;
+          pos.dataset.terminal = id;
+          pos.dataset.codigo = posicaoNum;
+          pos.title = posicaoNum.toString();
+          pos.innerText = posicaoNum;
+          posicoesContainer.appendChild(pos);
+        }
+
         termDiv.appendChild(posicoesContainer);
       });
     }
@@ -356,7 +510,7 @@
       });
     }
 
-    // Autorizar pouso na pista 1
+    // Autorizar pouso na pista 1 - agora segue rota pelo taxiway e para terminal correto
     function autorizarPouso(voo) {
       voo.status = "Pousando";
       renderizarChegadas();
@@ -370,8 +524,30 @@
       el.dataset.info = JSON.stringify(voo);
       aeroporto.appendChild(el);
 
+      // Rota depende do terminal para definir o destino taxiway final e entrada terminal
       const terminalDestino = (voo.terminal || "TPS1").toUpperCase();
-      const rota = ["pista1_fim", "taxiA_inicio", "taxiA_meio", "taxiB_descida", "entrada_" + terminalDestino];
+
+      // Definir rota de pouso para o terminal (considerando terminais linha superior e inferior)
+      let rota = [];
+      if (["TPS1","TPS2","TPS3","TPS4","TPS5"].includes(terminalDestino)) {
+        // Para terminais superiores, rota via pista1 e taxiA/B
+        rota = [
+          "pista1_fim",            // fim da pista 1 pouso
+          "taxiA_inicio",          // início taxiA
+          "taxiA_meio",            // meio taxiA
+          "taxiB_descida",         // descida taxiB (vertical)
+          "entrada_" + terminalDestino  // entrada terminal
+        ];
+      } else {
+        // Para terminais inferiores, rota via pista2 e taxiG/H
+        rota = [
+          "pista2_fim",
+          "taxiG_inicio",
+          "taxiG_meio",
+          "taxiH_descida",
+          "entrada_" + terminalDestino
+        ];
+      }
 
       seguirRota(el, rota, () => {
         voo.status = "Aguardando Alocacao";
@@ -381,38 +557,6 @@
       });
 
       el.onclick = (evt) => { evt.stopPropagation(); selecionarPartida(el, voo); };
-    }
-
-    // Controla movimentação por taxiways e fila terminal
-    function taxiwayParaTerminais(el, voo, taxiwaysIds, terminaisIds) {
-      let indexTerminal = (parseInt(voo.id.replace(/\D/g,"")) || 0) % terminaisIds.length;
-      let terminalId = terminaisIds[indexTerminal];
-      let taxiwayFirst = taxiwaysIds[0];
-      let taxiwaySecond = taxiwaysIds[1];
-      const tFirstDiv = document.getElementById(taxiwayFirst);
-      const tSecondDiv = document.getElementById(taxiwaySecond);
-      const terminalDiv = document.getElementById(terminalId);
-
-      filasTaxi[terminalId] = filasTaxi[terminalId] || [];
-      let posFila = filasTaxi[terminalId].length * 37;
-      filasTaxi[terminalId].push(voo.id);
-
-      // 1. Movimento horizontal taxiway A fim
-      const taxiAEndX = tFirstDiv.offsetLeft + tFirstDiv.offsetWidth - el.offsetWidth - 4;
-      moverSuave(el, taxiAEndX, parseInt(el.style.top), () => {
-        // 2. Descida vertical taxiway B
-        moverSuave(el, el.style.left ? parseInt(el.style.left) : taxiAEndX, tSecondDiv.offsetTop, () => {
-          // 3. Entrada do terminal na fila vertical na lateral direita (offset right)
-          const terminalLeft = terminalDiv.offsetLeft + terminalDiv.offsetWidth - 40; // margem direita para posicoes
-          const terminalTop = terminalDiv.offsetTop + posFila + 10;
-          moverSuave(el, terminalLeft, terminalTop, () => {
-            voo.status = "Aguardando Alocacao";
-            el.style.background = "orange";
-            el.dataset.info = JSON.stringify(voo);
-            escolherPosicaoTerminal(el, voo);
-          });
-        });
-      });
     }
 
     // Popup para escolher posição livre no terminal
@@ -435,7 +579,7 @@
       select.style.width = "100%";
       select.style.fontSize = "15px";
 
-      const posicoesLivres = Array.from(document.querySelectorAll(".posicao.livre"));
+      const posicoesLivres = Array.from(document.querySelectorAll(".posicao.livre")).filter(pos => pos.dataset.terminal === (voo.terminal || "TPS1").toUpperCase());
       if (posicoesLivres.length === 0) {
         select.innerHTML = "<option disabled>Nenhuma posição livre disponível</option>";
       } else {
@@ -464,8 +608,8 @@
         // Animate to position inside terminal
         const rect = pos.getBoundingClientRect();
         const parentRect = aeroporto.getBoundingClientRect();
-        const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop;
-        const destinoLeft = rect.left - parentRect.left + aeroporto.scrollLeft;
+        const destinoTop = rect.top - parentRect.top + aeroporto.scrollTop + 2; // +2 para compensar bordas
+        const destinoLeft = rect.left - parentRect.left + aeroporto.scrollLeft + 2;
 
         moverSuave(el, destinoLeft, destinoTop, () => {
           el.style.background = "#1a73e8";
@@ -502,8 +646,9 @@
 
     // Botão para trocar posição da aeronave estacionada
     function adicionarBotaoTrocarPosicao(el) {
-      const botaoExistente = aeroporto.querySelector(`.btn-trocar-posicao[data-id='${el.dataset.info}']`);
-      if (botaoExistente) botaoExistente.remove();
+      const idData = el.dataset.info;
+      const btnExistente = aeroporto.querySelector(`.btn-trocar-posicao[data-id='${idData}']`);
+      if (btnExistente) btnExistente.remove();
 
       const btn = document.createElement("button");
       btn.className = "btn-trocar-posicao";
@@ -518,7 +663,7 @@
       btn.style.cursor = "pointer";
       btn.style.background = "#444";
       btn.style.color = "#fff";
-      btn.dataset.id = el.dataset.info;
+      btn.dataset.id = idData;
 
       btn.onclick = () => {
         alert("Clique em uma nova posição livre para mover a aeronave.");
@@ -674,8 +819,8 @@
         }
       });
     });
-
   </script>
 </body>
 </html>
 
+```
