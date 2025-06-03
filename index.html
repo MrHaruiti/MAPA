@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Aeroporto com Duas Pistas e Distância Corrigida</title>
+  <title>Aeroporto com Pátio Conectado</title>
   <style>
     body {
       margin: 0;
@@ -87,7 +87,7 @@
 
     .patio {
       position: absolute;
-      top: 570px;
+      top: 530px;
       left: 0;
       width: 100%;
       height: 1200px;
@@ -104,7 +104,7 @@
     <div class="taxiway-paralela paralela-superior"></div>
     <div class="taxiway-paralela paralela-inferior"></div>
 
-    <!-- Pátio -->
+    <!-- Pátio (agora imediatamente após o fim das taxiways superiores) -->
     <div class="patio"></div>
 
     <!-- Pista inferior -->
@@ -137,7 +137,7 @@
         final.style.left = x + 'px';
         mapa.appendChild(final);
 
-        // Taxiways inferiores (agora com distância proporcional ao pátio)
+        // Taxiways inferiores
         const taxiwayInf = document.createElement('div');
         taxiwayInf.className = 'taxiway-inferior';
         taxiwayInf.style.left = x + 'px';
